@@ -9,9 +9,9 @@ use std::fmt::Display;
 
 /// The entire world, consiting of [`Solid`]s, [`Entity`]s, and global info
 #[derive(Clone, Debug, PartialEq)]
-pub struct Map {
+pub struct Map<'a> {
     pub info: Vec<Prop>,
-    pub solids: Vec<Solid>,
+    pub solids: Vec<Solid<'a>>,
     pub entities: Vec<Entity>,
 }
 

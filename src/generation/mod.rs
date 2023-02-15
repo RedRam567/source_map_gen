@@ -6,7 +6,10 @@
 // pub fn cube text
 // pub fn cube texts
 
-use crate::{map::{Map, Plane, Point, Side, Solid, Texture, TextureBuilder}, MAT_DEV_FLOOR};
+use crate::{
+    map::{Map, Plane, Point, Side, Solid, Texture, TextureBuilder},
+    MAT_DEV_FLOOR, MAT_DEV_WALL,
+};
 
 /// Bounds in 3d space.
 pub struct Bounds<T> {
@@ -57,6 +60,11 @@ impl Bounds<f32> {
     ///
     /// `top`, `bottom`, `left`, `right`, `back`, `front`
     pub fn planes(&self) -> [Plane; 6] {
+        // hammer seems to use plane points that start at different vertexes
+        // example back face starts in "bottom right"
+        // mine always starts in "bottom left" expect for maybe bottom idk
+        // shouldn't matter tho, any 3 points on the same plane should workd
+        // (in clockwise order, also 90 degrees stuff??)
         let verts = self.verts();
         let top = Plane::new(verts[4].clone(), verts[5].clone(), verts[6].clone());
         let bottom = Plane::new(verts[2].clone(), verts[1].clone(), verts[0].clone());
@@ -68,33 +76,60 @@ impl Bounds<f32> {
     }
 }
 
-impl Map {
-    pub fn cube_dev(bounds: Bounds<f32>) -> Solid {
-        // let verts = bounds.verts();
-        // dbg!(&verts);
+impl<'a> Map<'a> {
+    // pub fn cube_dev(bounds: Bounds<f32>) -> Solid {
+    //     let [top, bottom, left, right, back, front] = bounds.planes();
 
-        // hammer seems to use plane points that start at different vertexes
-        // example back face starts in "bottom right"
-        // mine always starts in "bottom left" expect for maybe bottom idk
-        // shouldn't matter tho, any 3 points on the same plane should workd
-        // (in clockwise order, also 90 degrees stuff??)
+    //     let sides = vec![
+    //         Side { plane: top, texture: TextureBuilder::new().top().mat(MAT_DEV_FLOOR).build() },
+    //         Side { plane: bottom, texture: TextureBuilder::new().bottom().build() },
+    //         Side { plane: left, texture: TextureBuilder::new().left().build() },
+    //         Side { plane: right, texture: TextureBuilder::new().right().build() },
+    //         Side { plane: back, texture: TextureBuilder::new().back().build() },
+    //         Side {
+    //             plane: front,
+    //             texture: TextureBuilder::new().front().mat(MAT_DEV_FLOOR).build(),
+    //         },
+    //     ];
+    //     Solid { sides }
+    // }
 
-        let planes = bounds.planes();
-        let [top, bottom, left, right, back, front] = planes;
+    pub fn cube_dev(bounds: Bounds<f32>) -> Solid<'a> {
+        let top_t = TextureBuilder::new().top().mat(MAT_DEV_FLOOR).build();
+        let left_t = TextureBuilder::new().left().mat(MAT_DEV_WALL).build();
+        let back_t = TextureBuilder::new().back().mat(MAT_DEV_WALL).build();
+        let string = String::from("abc");
+        // let str: &'static str = &string;
+        // let textures = [top_t.clone(), top_t, left_t.clone(), left_t, back_t.clone(), back_t];
+        let textures = [&top_t, &top_t, &left_t, &left_t, &back_t, &back_t];
+        Self::cube_ref(bounds, textures)
 
-        let sides = vec![
-            Side { plane: top, texture: TextureBuilder::new().top().mat(MAT_DEV_FLOOR).build() },
-            Side { plane: bottom, texture: TextureBuilder::new().bottom().build() },
-            Side { plane: left, texture: TextureBuilder::new().left().build() },
-            Side { plane: right, texture: TextureBuilder::new().right().build() },
-            Side { plane: back, texture: TextureBuilder::new().back().build() },
-            Side { plane: front, texture: TextureBuilder::new().front().mat(MAT_DEV_FLOOR).build() },
-        ];
-        Solid { sides }
     }
 
-    pub fn cube(bounds: Bounds<f32>, textures: &[Texture; 6]) -> Solid {
-        todo!()
+    // pub fn cube_mat(bounds: Bounds<f32>, &[&]) ->
+
+    pub fn cube(bounds: Bounds<f32>, textures: &[Texture; 6]) -> Solid<'a> {
+        Solid::new(
+            bounds
+                .planes()
+                .into_iter()
+                // this clone makes this function 10 times smaller
+                .zip(textures.clone().into_iter())
+                .map(|(p, t)| Side::new(p, t))
+                .collect(),
+        )
+    }
+
+    pub fn cube_ref(bounds: Bounds<f32>, textures: [&Texture; 6]) -> Solid<'a> {
+        Solid::new(
+            bounds
+                .planes()
+                .into_iter()
+                // this clone makes this function 10 times smaller
+                .zip(textures.into_iter())
+                .map(|(p, t)| Side::new(p, t.clone()))
+                .collect(),
+        )
     }
 }
 

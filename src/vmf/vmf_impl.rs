@@ -8,7 +8,7 @@ pub struct VmfState {
     pub max_side_id: u32,
 }
 
-impl ToBlock<String, VmfState, ()> for Solid {
+impl<'a> ToBlock<String, VmfState, ()> for Solid<'a> {
     fn to_block(&self, state: &mut VmfState) -> Block<String> {
         state.max_solid_id += 1;
         let id = state.max_solid_id;
@@ -20,14 +20,14 @@ impl ToBlock<String, VmfState, ()> for Solid {
     }
 }
 
-impl ToBlock<String, VmfState, ()> for Side {
+impl<'a> ToBlock<String, VmfState, ()> for Side<'a> {
     fn to_block(&self, state: &mut VmfState) -> Block<String> {
         state.max_side_id += 1;
         let id = state.max_side_id;
         let props = vec![
             Property::new("id", id.to_string()),
             Property::new("plane", self.plane.to_string()),
-            Property::new("material", self.texture.material.clone()),
+            Property::new("material", self.texture.material.into_owned()),
             Property::new("uaxis", self.texture.uaxis.to_string()),
             Property::new("vaxis", self.texture.vaxis.to_string()),
             // rotation and smoothing group not mandatory

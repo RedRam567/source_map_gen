@@ -1,10 +1,10 @@
 //! # Info
-//! 
+//!
 //! In this libray, the xyz axes are right handed Z up. +X is right, +Y is forward, +Z is up.
 //! Hammer, Source, Blender are all right handed Z up
-//! 
+//!
 //! # Definitions
-//! 
+//!
 //! - Right / right face: The direction or face closest to +X.
 //! - Left / left face: The direction or face closest to -X.
 //! - Front / front face: The direction or face closest to +Y.
@@ -28,8 +28,9 @@ const MAT_DEV_FLOOR: &str = "DEV/DEV_MEASUREGENERIC01B";
 // trait for converting to vmf part
 // others can do trait to convert to their map formats
 
+pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
 
+pub mod generation;
 /// Map structs
 pub mod map;
 pub mod vmf;
-pub mod generation;

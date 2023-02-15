@@ -5,5 +5,5 @@ use super::*;
 pub struct Entity {
     pub classname: String,
     pub solid: Option<Solid>,
-    pub origin: Option<Point<f64>>
+    pub origin: Option<Point<f64>>,
 }

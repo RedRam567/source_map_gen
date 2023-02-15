@@ -1,18 +1,30 @@
-use std::fmt::Display;
+use std::{borrow::Cow, fmt::Display};
 
-use crate::MAT_DEV_WALL;
+use crate::StrType;
 
 /// A peice of map geometry. Ex: a cube, cylinder
 #[derive(Clone, Debug, PartialEq)]
-pub struct Solid {
-    pub sides: Vec<Side>,
+pub struct Solid<'a> {
+    pub sides: Vec<Side<'a>>,
+}
+
+impl<'a> Solid<'a> {
+    pub const fn new(sides: Vec<Side>) -> Self {
+        Self { sides }
+    }
 }
 
 /// A side of a [`Solid`].
 #[derive(Clone, Debug, PartialEq)]
-pub struct Side {
+pub struct Side<'a> {
     pub plane: Plane,
-    pub texture: Texture,
+    pub texture: Texture<'a>,
+}
+
+impl<'a> Side<'a> {
+    pub fn new(plane: Plane, texture: Texture) -> Self {
+        Self { plane, texture }
+    }
 }
 
 /// A flat geometric plane.
@@ -48,11 +60,22 @@ impl<T> Point<T> {
 
 /// Infomation about a texture on a [`Plane`]
 #[derive(Clone, Debug, PartialEq)]
-pub struct Texture {
-    pub material: String,
+pub struct Texture<'a> {
+    pub material: StrType<'a>,
     pub uaxis: UVAxis<f32>,
     pub vaxis: UVAxis<f32>,
     pub light_scale: u8,
+}
+
+impl<'a> Texture<'a> {
+    pub const fn new(
+        material: StrType<'a>,
+        uaxis: UVAxis<f32>,
+        vaxis: UVAxis<f32>,
+        light_scale: u8,
+    ) -> Self {
+        Self { material, uaxis, vaxis, light_scale }
+    }
 }
 
 /// Texture coords.
@@ -64,6 +87,12 @@ pub struct UVAxis<T> {
     pub z: T,
     pub trans: T,
     pub scale: T,
+}
+
+impl<T> UVAxis<T> {
+    pub const fn new(x: T, y: T, z: T, trans: T, scale: T) -> Self {
+        Self { x, y, z, trans, scale }
+    }
 }
 
 impl Display for Plane {
@@ -85,29 +114,33 @@ impl<T: Display> Display for UVAxis<T> {
 }
 
 #[repr(transparent)]
-pub struct TextureBuilder(Texture);
+pub struct TextureBuilder<'a>(Texture<'a>);
 
-impl TextureBuilder {
-    pub fn new() -> Self {
+impl<'a> TextureBuilder<'a> {
+    pub const fn new() -> Self {
         Self(Texture {
-            material: MAT_DEV_WALL.to_string(),
+            material: Cow::Borrowed(""),
             uaxis: UVAxis::default_top().0,
             vaxis: UVAxis::default_top().1,
             light_scale: 16,
         })
     }
     // prop unnecessary micro optimization to allow const
-    pub const fn build(self) -> Texture {
+    pub const fn build(self) -> Texture<'a> {
         // SAFETY: safe as `self` is repr(transparent)
         unsafe { std::mem::transmute(self) }
     }
     /// Set the material.
-    /// Allocates if `s` isnt already a [`String`].
-    pub fn mat(mut self, s: impl Into<String>) -> Self {
-        self.0.material = s.into();
+    pub const fn mat(mut self, s: &str) -> Self {
+        self.0.material = Cow::Borrowed(s);
         self
     }
-    /// Set the lightmap scale. Cannot be 0
+    /// Set the material.
+    pub const fn mat_owned(mut self, s: String) -> Self {
+        self.0.material = Cow::Owned(s);
+        self
+    }
+    /// Set the lightmap scale. Cannot be 0.
     pub const fn light_scale(mut self, scale: u8) -> Self {
         debug_assert!(scale != 0);
         self.0.light_scale = scale;
@@ -145,7 +178,7 @@ impl TextureBuilder {
     }
 }
 
-impl Default for TextureBuilder {
+impl<'a> Default for TextureBuilder<'a> {
     fn default() -> Self {
         Self::new()
     }
