@@ -9,7 +9,7 @@ pub struct Solid<'a> {
 }
 
 impl<'a> Solid<'a> {
-    pub const fn new(sides: Vec<Side>) -> Self {
+    pub const fn new(sides: Vec<Side<'a>>) -> Self {
         Self { sides }
     }
 }
@@ -22,7 +22,7 @@ pub struct Side<'a> {
 }
 
 impl<'a> Side<'a> {
-    pub fn new(plane: Plane, texture: Texture) -> Self {
+    pub fn new(plane: Plane, texture: Texture<'a>) -> Self {
         Self { plane, texture }
     }
 }
@@ -131,13 +131,8 @@ impl<'a> TextureBuilder<'a> {
         unsafe { std::mem::transmute(self) }
     }
     /// Set the material.
-    pub const fn mat(mut self, s: &str) -> Self {
-        self.0.material = Cow::Borrowed(s);
-        self
-    }
-    /// Set the material.
-    pub const fn mat_owned(mut self, s: String) -> Self {
-        self.0.material = Cow::Owned(s);
+    pub fn mat(mut self, s: StrType<'a>) -> Self {
+        self.0.material = s;
         self
     }
     /// Set the lightmap scale. Cannot be 0.

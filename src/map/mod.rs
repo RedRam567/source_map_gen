@@ -12,7 +12,7 @@ use std::fmt::Display;
 pub struct Map<'a> {
     pub info: Vec<Prop>,
     pub solids: Vec<Solid<'a>>,
-    pub entities: Vec<Entity>,
+    pub entities: Vec<Entity<'a>>,
 }
 
 // TODO: hashmap

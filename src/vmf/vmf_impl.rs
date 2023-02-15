@@ -27,7 +27,7 @@ impl<'a> ToBlock<String, VmfState, ()> for Side<'a> {
         let props = vec![
             Property::new("id", id.to_string()),
             Property::new("plane", self.plane.to_string()),
-            Property::new("material", self.texture.material.into_owned()),
+            Property::new("material", self.texture.material.to_string()),
             Property::new("uaxis", self.texture.uaxis.to_string()),
             Property::new("vaxis", self.texture.vaxis.to_string()),
             // rotation and smoothing group not mandatory

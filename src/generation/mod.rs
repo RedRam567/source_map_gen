@@ -95,9 +95,9 @@ impl<'a> Map<'a> {
     // }
 
     pub fn cube_dev(bounds: Bounds<f32>) -> Solid<'a> {
-        let top_t = TextureBuilder::new().top().mat(MAT_DEV_FLOOR).build();
-        let left_t = TextureBuilder::new().left().mat(MAT_DEV_WALL).build();
-        let back_t = TextureBuilder::new().back().mat(MAT_DEV_WALL).build();
+        let top_t = TextureBuilder::new().top().mat(MAT_DEV_FLOOR.into()).build();
+        let left_t = TextureBuilder::new().left().mat(MAT_DEV_WALL.into()).build();
+        let back_t = TextureBuilder::new().back().mat(MAT_DEV_WALL.into()).build();
         let string = String::from("abc");
         // let str: &'static str = &string;
         // let textures = [top_t.clone(), top_t, left_t.clone(), left_t, back_t.clone(), back_t];
@@ -108,7 +108,7 @@ impl<'a> Map<'a> {
 
     // pub fn cube_mat(bounds: Bounds<f32>, &[&]) ->
 
-    pub fn cube(bounds: Bounds<f32>, textures: &[Texture; 6]) -> Solid<'a> {
+    pub fn cube(bounds: Bounds<f32>, textures: &[Texture<'a>; 6]) -> Solid<'a> {
         Solid::new(
             bounds
                 .planes()
@@ -120,7 +120,7 @@ impl<'a> Map<'a> {
         )
     }
 
-    pub fn cube_ref(bounds: Bounds<f32>, textures: [&Texture; 6]) -> Solid<'a> {
+    pub fn cube_ref(bounds: Bounds<f32>, textures: [&Texture<'a>; 6]) -> Solid<'a> {
         Solid::new(
             bounds
                 .planes()
@@ -135,12 +135,16 @@ impl<'a> Map<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::Cow;
+
     use crate::vmf::{ToBlock, VmfState};
 
     use super::*;
 
     #[test]
     fn cube() {
+        let cow: Cow<str> = "cow".into();
+        dbg!(cow);
         let bounds = Bounds::new(Point::new(-128.0, -192.0, -64.0), Point::new(384f32, 320.0, 0.0));
         let cube = Map::cube_dev(bounds);
         let mut state = VmfState::default();
