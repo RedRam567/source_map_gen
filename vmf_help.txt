@@ -1,0 +1,32 @@
+// versioninfo{} // hammer info
+// visgroups{} // visgroups
+// world{} // world brush
+    // id
+    // mapversion
+    // classname=worldspawn
+    // skyname
+    // ?
+    // solid{}.. // brush // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Solid
+        // id
+        // side{} // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Side
+        // editor{} // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Editor
+    // hidden{} // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Hidden
+        // solid{}
+        // entity{}
+    // group{} // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Group
+    // enditor{}
+// entity{} // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Entity
+    // id
+    // classname
+    // spawnflags
+    // PROPERTIES
+    // connections{} // hammerio
+    // solid{}
+    // hidden{}
+    // origin // origin for brush or location for point enitity
+    // editor{}
+// hidden{} // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Hidden
+    // solid{}
+    // entitiy{}
+// cameras{} // hamer cameras // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Cameras
+// cordon{} // https://developer.valvesoftware.com/wiki/Valve_Map_Format#Cordon

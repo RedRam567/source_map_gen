@@ -1,0 +1,6 @@
+max_width=100
+# format_code_in_doc_comments=true # unstable
+newline_style="Unix"
+use_field_init_shorthand=true
+# use max_width instead of wierd precentages for certain items
+use_small_heuristics="Max"
