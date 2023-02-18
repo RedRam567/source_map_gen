@@ -1,14 +1,18 @@
+//! Representation of a map containing [`Solid`]s and `Entity`s
+
 mod entity;
 mod solid;
+mod vector;
 
 pub use entity::*;
 pub use solid::*;
+pub use vector::*;
 
 use std::fmt::Display;
 // use vmfparser::ast::Property;
 
 /// The entire world, consiting of [`Solid`]s, [`Entity`]s, and global info
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Map<'a> {
     pub info: Vec<Prop>,
     pub solids: Vec<Solid<'a>>,

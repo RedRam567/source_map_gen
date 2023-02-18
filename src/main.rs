@@ -1,12 +1,12 @@
 use proc_gen2::{
     generation::Bounds,
-    map::{Map, Point},
+    map::{Map, Vector3},
     vmf::{ToBlock, VmfState},
 };
 
 fn main() {
-    let bounds = Bounds::new(Point::new(-128.0, -192.0, -64.0), Point::new(384f32, 320.0, 0.0));
-    let cube = Map::cube_dev(bounds);
+    let bounds = Bounds::new(Vector3::new(-128.0, -192.0, -64.0), Vector3::new(384f32, 320.0, 0.0));
+    let cube = Map::cube_dev1(bounds);
     let mut state = VmfState::default();
     let vmf = cube.to_block(&mut state);
     println!("{vmf}");
