@@ -1,9 +1,9 @@
 //! # Info
 //!
-//! In this libray, the xyz axes are right handed Z up. +X is right, +Y is forward, +Z is up.
+//! In this libray, the 3d coordinate grid is right handed Z up. +X is right, +Y is forward, +Z is up.
 //! Hammer, Source, Blender, Math are all right handed Z up.
-//! (Forward direction is inconsistent, -X is "the convention")
-//! [https://en.wikipedia.org/wiki/Cartesian_coordinate_system#Notations_and_conventions](https://en.wikipedia.org/wiki/Cartesian_coordinate_system#Notations_and_conventions)
+//! (Forward direction is inconsistent, -X is "the convention" in math at least)
+//! <https://en.wikipedia.org/wiki/Cartesian_coordinate_system#Notations_and_conventions>
 //!
 //! # Definitions
 //!
@@ -23,15 +23,79 @@
 #![allow(clippy::zero_prefixed_literal)]
 #![deny(clippy::semicolon_if_nothing_returned)]
 #![warn(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::bool_assert_comparison)] // like bro chill
 
 pub mod generation;
 pub mod map;
 pub mod vmf;
+pub mod scripting;
+
+pub mod prelude {
+    pub use crate::map::solid::*;
+    pub use crate::map::texture::*;
+    pub use crate::map::vector::*;
+    pub(crate) use crate::StrType;
+}
 
 pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
+
+// preferred rust group order (pub first in the same group)
+// extern
+// mod
+// inline mod
+// use
+// const, static, type
+// struct, enum, union
+// traits
+// impl
+// fn
+// mod test {}
 
 // normal slope stair default
 
 // my representation of the world
 // trait for converting to vmf part
 // others can do trait to convert to their map formats
+
+// https://en.wikipedia.org/wiki/Cross_product#Matrix_notation
+// https://en.wikipedia.org/wiki/Dot_product
+// https://en.wikipedia.org/wiki/Rotation_matrix#In_three_dimensions
+
+// house region with room regions, negative space is hallways? also hallways
+
+// get large super region: city, subway, hostital
+//  random walk room builder with sub rooms: house, hallway
+//
+
+// outside:
+//  unconnected walls = extend a tile and add decor and skybox
+// add hallways and rooms with wave collaspe "directed" toward goal
+//  nah just do smth similar with wandering "room builder"
+
+// no mercy:
+// house region
+//  roof
+//  rooms floors etc
+// city region
+//  alley
+//  alley rooms
+//  negative is infected houses
+// city region
+//  3 road regions, cull large negative flow
+//   branching alleys
+//  office floor house
+//  warehousey house
+//  subway house
+
+// dustbowl
+// spawn region
+// dustbowl region 1
+//  trench
+//  houses
+// dustbowl connector
+// dustbowl region 1
+// connector
+// dustbowl region 2 variant
+// connector
+// ..
+// 8 mega regions (8 points), connected by connectors and s

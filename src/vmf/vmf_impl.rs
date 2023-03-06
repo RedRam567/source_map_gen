@@ -1,15 +1,12 @@
 use super::*;
-use crate::map::{Side, Solid};
-use vmfparser::ast::{Block, Property};
+use crate::{
+    generation::region::{Room},
+    map::{IdInfo, Map, Side, Solid},
+};
+use vmf_parser_nom::ast::{Block, Property};
 
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct VmfState {
-    pub max_solid_id: u32,
-    pub max_side_id: u32,
-}
-
-impl<'a> ToBlock<String, VmfState, ()> for Solid<'a> {
-    fn to_block(&self, state: &mut VmfState) -> Block<String> {
+impl<'a> ToBlock<String, IdInfo, ()> for Solid<'a> {
+    fn to_block(&self, state: &mut IdInfo) -> Block<String> {
         state.max_solid_id += 1;
         let id = state.max_solid_id;
         Block {
@@ -20,8 +17,8 @@ impl<'a> ToBlock<String, VmfState, ()> for Solid<'a> {
     }
 }
 
-impl<'a> ToBlock<String, VmfState, ()> for Side<'a> {
-    fn to_block(&self, state: &mut VmfState) -> Block<String> {
+impl<'a> ToBlock<String, IdInfo, ()> for Side<'a> {
+    fn to_block(&self, state: &mut IdInfo) -> Block<String> {
         state.max_side_id += 1;
         let id = state.max_side_id;
         let props = vec![
@@ -38,5 +35,56 @@ impl<'a> ToBlock<String, VmfState, ()> for Side<'a> {
         ];
         let blocks = vec![]; // TODO: disp info
         Block { name: "side".to_string(), props, blocks }
+    }
+}
+
+impl<'a> ToVmf<String, IdInfo, ()> for Map<'a> {
+    fn to_vmf(&self, state: &mut IdInfo) -> Vmf<String> {
+        let mut vmf = Vmf::default();
+        let mut solids: Vec<_> = self.solids.iter().map(|s| s.to_block(state)).collect();
+        if let Some(cordon) = &self.options.dev_skybox {
+            solids.extend(
+                Room::new(cordon.clone())
+                    .construct_sky()
+                    .into_iter()
+                    .map(|s| s.to_block(state)),
+            );
+        }
+        vmf.push(Block {
+            name: "versioninfo".to_string(),
+            props: vec![
+                Property::new("editorversion", "400".to_string()),
+                Property::new("editorbuild", "9540".to_string()),
+                Property::new("mapversion", "1".to_string()),
+                Property::new("formatversion", "100".to_string()),
+                Property::new("prefab", "0".to_string()),
+            ],
+            blocks: vec![],
+        });
+        vmf.push(Block { name: "visgroups".to_string(), props: vec![], blocks: vec![] });
+        vmf.push(Block {
+            name: "viewsettings".to_string(),
+            props: vec![
+                Property::new("bSnapToGrid", "1".to_string()),
+                Property::new("bShowGrid", "1".to_string()),
+                Property::new("bShowLogicalGrid", "0".to_string()),
+                Property::new("nGridSpacing", "64".to_string()),
+                Property::new("bShow3DGrid", "0".to_string()),
+            ],
+            blocks: vec![],
+        });
+        vmf.push(Block {
+            name: "world".to_string(),
+            props: vec![
+                Property::new("id", "1".to_string()),
+                Property::new("mapversion", "1".to_string()),
+                Property::new("classname", "worldspawn".to_string()),
+                Property::new("skyname", "sky_day01_01".to_string()),
+            ],
+            blocks: solids,
+        });
+        // cameras unnessesary
+        // cordons unnessesary
+        vmf
     }
 }

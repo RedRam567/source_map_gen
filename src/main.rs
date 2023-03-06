@@ -1,15 +1,29 @@
-use proc_gen2::{
-    generation::Bounds,
-    map::{Map, Vector3},
-    vmf::{ToBlock, VmfState},
-};
+use proc_gen2::generation::{region::Room, Bounds};
+use proc_gen2::map::{IdInfo, Map, Vector3};
+use proc_gen2::vmf::ToVmf;
 
 fn main() {
-    let bounds = Bounds::new(Vector3::new(-128.0, -192.0, -64.0), Vector3::new(384f32, 320.0, 0.0));
-    let cube = Map::cube_dev1(bounds);
-    let mut state = VmfState::default();
-    let vmf = cube.to_block(&mut state);
+    let _map = Map::default();
+    // let bounds = Bounds::new(Vector3::new(-128.0, -192.0, -128.0), Vector3::new(384f32, 320.0, -64.0));
+    // let cube = Map::cube_dev1(bounds);
+    // map.add_solid(cube);
+
+    let mut map = Map::default();
+    let room = Room::new(Bounds {
+        min: Vector3::new(-512.0, -512.0, -512.0),
+        max: Vector3::new(512.0, 512.0, 512.0),
+    });
+    map.options.dev_skybox = Some(Bounds {
+        min: Vector3::new(-5120.0, -5120.0, -5120.0),
+        max: Vector3::new(5120.0, 5120.0, 5120.0),
+    });
+    room.construct(&mut map);
+
+    let mut state = IdInfo::default();
+    let vmf = map.to_vmf(&mut state);
     println!("{vmf}");
+
+    let vmf = vmf_parser_nom::parse::<&str, ()>("abc123").unwrap();
 }
 
 // // extern crate kiss3d;

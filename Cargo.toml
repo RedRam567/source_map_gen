@@ -6,10 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vmfparser = "0.1"
+derive_ops = { path = "../derive_ops" }
+vmf_parser_nom = { path = "../vmf_parser_nom" }
+# vmf_parser_nom = "0.1"
+
+indextree = "4.5"
+rand_chacha = "0.3"
+
 # kiss3d = "0.35"
 # console_error_panic_hook = "0.1"
-derive_ops = { path = "../derive_ops" }
 
 [dev-dependencies]
 approx = "0.5"

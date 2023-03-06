@@ -2,10 +2,13 @@
 //! See [`vmfparser`] crate.
 mod vmf_impl;
 
-pub use vmf_impl::*;
+use std::{ops::{Deref, DerefMut}, fmt::Display};
 
-type Vmf<S> = Vec<Block<S>>;
-use vmfparser::ast::{Block, Property};
+pub use vmf_impl::*;
+use vmf_parser_nom::ast::{Block, Property};
+
+#[derive(Clone, Debug, Default)]
+pub struct Vmf<S>(Vec<Block<S>>);
 
 pub trait ToVmf<S, T, E> {
     /// Convert into vmf ast.
@@ -17,9 +20,9 @@ pub trait ToBlock<S, T, E> {
     fn to_block(&self, state: &mut T) -> Block<S>;
 }
 
-pub trait ToProps<K, T, E> {
+pub trait ToProps<T, K, V, E> {
     /// Convert into vmf [`Property`]s.
-    fn to_props(&self, state: &mut T) -> Vec<Property<K>>;
+    fn to_props(&self, state: &mut T) -> Vec<Property<K, V>>;
 }
 
 pub trait FromVmf<T, U, E>
@@ -49,11 +52,35 @@ pub trait PropertyExt<T, K> {
     fn new(key: T, value: String) -> Self;
 }
 
-impl<T, K> PropertyExt<T, K> for Property<K>
-where
-    T: Into<K>,
-{
-    fn new(key: T, value: String) -> Property<K> {
-        Property { key: key.into(), value }
+impl<S> Deref for Vmf<S> {
+    type Target = Vec<Block<S>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
+
+impl<S> DerefMut for Vmf<S> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<S: Display> Display for Vmf<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "// auto generated vmf file")?;
+        for block in self.iter() {
+            write!(f, "{block:#}")?;
+        }
+        Ok(())
+    }
+}
+
+// impl<T, K, V> PropertyExt<T, K> for Property<K, V>
+// where
+//     T: Into<K>,
+// {
+//     fn new(key: T, value: String) -> Property<K, V> {
+//         Property { key: key.into(), value }
+//     }
+// }
