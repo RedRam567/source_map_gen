@@ -3,6 +3,12 @@
 use std::ops::Deref;
 use std::{error::Error, fs};
 use vmf_parser_nom::ast::Block;
+use rhai::Engine;
+
+// TODO: cylinder
+// TODO: (multi) clipping
+// TODO: get all brushes and entities, all solids, texts, block, prop
+// TODO: low, mid, high level repr (vmf, mid, rooms)
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct StrictEngine {
@@ -51,3 +57,19 @@ struct StrictEngine {
 //         IResult::Error => Err("parse error"),
 //     }
 // }
+
+#[cfg(test)]
+mod tests {
+    use rhai::Dynamic;
+
+    use super::*;
+
+    #[test]
+    fn test_rhai() {
+        let mut engine = Engine::new();
+        let ast = engine.compile_file("scripts/example.rhai".into()).unwrap();
+        let result = engine.eval_ast::<i32>(&ast).unwrap();
+        dbg!(result);
+        panic!();
+    }
+}

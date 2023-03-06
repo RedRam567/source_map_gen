@@ -33,7 +33,7 @@ impl<'a> ToBlock<String, IdInfo, ()> for Side<'a> {
             Property::new("lightmapscale", self.texture.light_scale.to_string()),
             Property::new("smoothing_groups", "0".to_string()),
         ];
-        let blocks = vec![]; // TODO: disp info
+        let blocks = vec![]; // TODO: displacement info here
         Block { name: "side".to_string(), props, blocks }
     }
 }

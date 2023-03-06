@@ -1,6 +1,9 @@
+use std::io::Read;
+
 use proc_gen2::generation::{region::Room, Bounds};
 use proc_gen2::map::{IdInfo, Map, Vector3};
 use proc_gen2::vmf::ToVmf;
+use rhai::Engine;
 
 fn main() {
     let _map = Map::default();
@@ -23,7 +26,12 @@ fn main() {
     let vmf = map.to_vmf(&mut state);
     println!("{vmf}");
 
-    let vmf = vmf_parser_nom::parse::<&str, ()>("abc123").unwrap();
+    // let vmf = vmf_parser_nom::parse::<&str, ()>("abc123").unwrap();
+
+    let engine = Engine::new();
+    let mut input = String::new();
+    let stdin = std::io::stdin().read_to_string(&mut input).unwrap();
+    let output = engine.eval::<()>(&input).unwrap();
 }
 
 // // extern crate kiss3d;
