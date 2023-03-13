@@ -23,8 +23,8 @@ fn main() {
     room.construct(&mut map);
 
     let mut state = IdInfo::default();
-    let vmf = map.to_vmf(&mut state);
-    println!("{vmf}");
+    // let vmf = map.to_vmf(&mut state);
+    // println!("{vmf}");
 
     // let vmf = vmf_parser_nom::parse::<&str, ()>("abc123").unwrap();
 
