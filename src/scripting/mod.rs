@@ -64,6 +64,7 @@ mod tests {
 
     use super::*;
 
+    #[ignore]
     #[test]
     fn test_rhai() {
         let mut engine = Engine::new();

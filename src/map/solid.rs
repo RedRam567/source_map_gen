@@ -3,7 +3,7 @@
 use std::fmt::Display;
 use crate::prelude::*;
 
-/// A peice of map geometry made out of sides. Ex: a cube, cylinder
+/// A peice of map geometry made out of sides. Ex: a cube, cylinder.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Solid<'a> {
     pub sides: Vec<Side<'a>>,

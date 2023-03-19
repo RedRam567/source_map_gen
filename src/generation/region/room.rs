@@ -36,7 +36,7 @@ impl<'a> Room<'a> {
         map.add_solid(Map::cube_dev(left));
     }
 
-    pub(crate) fn construct_sky(&self) -> [Solid; 6] {
+    pub(crate) fn construct_sky(&self) -> [Solid<'a>; 6] {
         let mut top = self.bounds.clone();
         top.min.z = top.max.z - WALL_THICKNESS;
         let top = Map::cube_sky(top);

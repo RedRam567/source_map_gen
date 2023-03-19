@@ -274,16 +274,16 @@ fn lines_overlap(x1: f32, x2: f32, y1: f32, y2: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
+    use crate::vmf::ToLower;
+
     use super::*;
-    use crate::{map::IdInfo, vmf::ToBlock};
 
     #[test]
     fn cube() {
         let bounds = Bounds::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 1.0, 1.0));
         // let bounds = Bounds::new(Vector3::new(-128.0, -192.0, -64.0), Vector3::new(384f32, 320.0, 0.0));
         let cube = Map::cube_dev1(bounds);
-        let mut state = IdInfo::default();
-        let _vmf = cube.to_block(&mut state);
+        let _vmf = cube.to_lower();
         // println!("{vmf}");
         // eprintln!("{vmf}");
         // dbg!(cube);

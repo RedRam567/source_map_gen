@@ -1,9 +1,8 @@
 use std::io::Read;
 
 use proc_gen2::generation::{region::Room, Bounds};
-use proc_gen2::map::{IdInfo, Map, Vector3};
-use proc_gen2::vmf::ToVmf;
-use rhai::Engine;
+use proc_gen2::map::{Map, Vector3};
+use rhai::{Engine, Dynamic};
 
 fn main() {
     let _map = Map::default();
@@ -16,13 +15,13 @@ fn main() {
         min: Vector3::new(-512.0, -512.0, -512.0),
         max: Vector3::new(512.0, 512.0, 512.0),
     });
-    map.options.dev_skybox = Some(Bounds {
+    map.options.cordon = Some(Bounds {
         min: Vector3::new(-5120.0, -5120.0, -5120.0),
         max: Vector3::new(5120.0, 5120.0, 5120.0),
     });
     room.construct(&mut map);
 
-    let mut state = IdInfo::default();
+    // let mut state = IdInfo::default();
     // let vmf = map.to_vmf(&mut state);
     // println!("{vmf}");
 
@@ -30,8 +29,9 @@ fn main() {
 
     let engine = Engine::new();
     let mut input = String::new();
-    let stdin = std::io::stdin().read_to_string(&mut input).unwrap();
-    let output = engine.eval::<()>(&input).unwrap();
+    std::io::stdin().read_to_string(&mut input).unwrap();
+    let output = engine.eval::<Dynamic>(&input).unwrap();
+    eprintln!("{output}");
 }
 
 // // extern crate kiss3d;

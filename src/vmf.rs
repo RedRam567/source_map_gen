@@ -1,6 +1,12 @@
 //! Vmf format traits and impls.
 //! See [`vmfparser`] crate.
-mod vmf_impl;
+
+use crate::{
+    generation::region::Room,
+    map::{Map, Side, Solid},
+    StrType,
+};
+use vmf_parser_nom::ast::{Block, Property, Vmf};
 
 /// Convert to a lower level of abstraction.
 /// Example: A [`Solid`](crate::map::solid::Solid) into a [`Block`](vmf_parser_nom::ast::Block).
@@ -24,6 +30,84 @@ pub trait ToHigher<T>: Clone {
     }
 }
 
+impl<'a> ToLower<Block<StrType<'a>>> for Side<'a> {
+    fn into_lower(self) -> Block<StrType<'a>> {
+        let props = vec![
+            // id unnecessary as [`vmf_parser_nom`] can generate new ids
+            Property::new("plane", self.plane.to_string()),
+            Property::new("material", self.texture.material.to_string()),
+            Property::new("uaxis", self.texture.uaxis.to_string()),
+            Property::new("vaxis", self.texture.vaxis.to_string()),
+            // rotation and smoothing group not mandatory
+            // rotation is just for hammer display, smoothing group defaults to 0 (none)
+            // Property::new("rotation", self.rotation.to_string()),
+            Property::new("lightmapscale", self.texture.light_scale.to_string()),
+            Property::new("smoothing_groups", "0".to_string()),
+        ];
+        let blocks = vec![]; // TODO: displacement info here
+        Block { name: "side".into(), props, blocks }
+    }
+}
+
+impl<'a> ToLower<Block<StrType<'a>>> for Solid<'a> {
+    fn into_lower(self) -> Block<StrType<'a>> {
+        Block {
+            name: "solid".into(),
+            // id unnecessary as [`vmf_parser_nom`] can generate new ids
+            props: vec![],
+            blocks: self.sides.iter().map(|x| x.to_lower()).collect(),
+        }
+    }
+}
+
+impl<'a> ToLower<Vmf<StrType<'a>>> for Map<'a> {
+    fn into_lower(self) -> Vmf<StrType<'a>> {
+        let mut vmf = Vmf::default();
+        let mut solid_blocks: Vec<_> = self.solids.iter().map(|s| s.to_lower()).collect();
+        if let Some(cordon) = self.options.cordon.clone() {
+            // TODO: add as actual cordon
+            solid_blocks
+                .extend(Room::new(cordon).construct_sky().into_iter().map(|s| s.to_lower()));
+        }
+
+        vmf.inner.blocks.push(Block {
+            name: "versioninfo".into(),
+            props: vec![
+                Property::new("editorversion", "400"),
+                Property::new("editorbuild", "9540"),
+                Property::new("mapversion", "1"),
+                Property::new("formatversion", "100"),
+                Property::new("prefab", "0"),
+            ],
+            blocks: vec![],
+        });
+        vmf.inner.blocks.push(Block { name: "visgroups".into(), props: vec![], blocks: vec![] });
+        vmf.inner.blocks.push(Block {
+            name: "viewsettings".into(),
+            props: vec![
+                Property::new("bSnapToGrid", "1"),
+                Property::new("bShowGrid", "1"),
+                Property::new("bShowLogicalGrid", "0"),
+                Property::new("nGridSpacing", "64"),
+                Property::new("bShow3DGrid", "0"),
+            ],
+            blocks: vec![],
+        });
+        vmf.inner.blocks.push(Block {
+            name: "world".into(),
+            props: vec![
+                Property::new("mapversion", "1"),
+                Property::new("classname", "worldspawn"),
+                Property::new("skyname", "sky_day01_01"),
+            ],
+            blocks: solid_blocks,
+        });
+        // cameras unnessesary
+        // cordons unnessesary
+        vmf
+    }
+}
+
 // /// Trait to convert into a low level map element representation.
 // /// Example: A mid level [`Solid`](crate::map::solid) into a low level [`Block`](vmf_parser_nom::ast::Block)
 // pub trait ToLowLevel {
@@ -33,7 +117,6 @@ pub trait ToHigher<T>: Clone {
 //     /// Convert this into an owned low level map element.
 //     fn to_low_level(&self) -> Self::Target;
 // }
-
 
 // /// Trait to convert into a mid level map element representation.
 // /// Example: A high level <TODO: ROOM> into a mid level vec [`Solid`](crate::map::solid)s
@@ -54,7 +137,6 @@ pub trait ToHigher<T>: Clone {
 //     /// Convert this into an owned high level map element.
 //     fn to_low_level(&self) -> Self::Target;
 // }
-
 
 // use std::{ops::{Deref, DerefMut}, fmt::Display};
 

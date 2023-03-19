@@ -18,12 +18,12 @@
 //! - Height how long on the Z axis.
 // TODO: change forward axis??
 
-#![warn(clippy::missing_safety_doc)]
-#![warn(clippy::missing_const_for_fn)]
-#![allow(clippy::zero_prefixed_literal)]
-#![deny(clippy::semicolon_if_nothing_returned)]
-#![warn(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::bool_assert_comparison)] // like bro chill
+#![allow(clippy::zero_prefixed_literal)]
+#![warn(clippy::missing_const_for_fn)]
+#![warn(clippy::missing_safety_doc)]
+#![warn(clippy::undocumented_unsafe_blocks)]
+#![deny(clippy::semicolon_if_nothing_returned)]
 
 pub mod generation;
 pub mod map;

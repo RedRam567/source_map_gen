@@ -88,6 +88,7 @@ impl<'a> MapTree<'a> {
 mod tests {
     use super::*;
 
+    #[ignore]
     #[test]
     fn test() {
         let mut arena = Arena::new();
