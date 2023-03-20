@@ -21,7 +21,7 @@ pub struct Side<'a> {
 /// When looking directly at the plane, `bottom_left` will be in the bottom left
 /// and so on, with the normal being towards you.
 /// See <https://developer.valvesoftware.com/wiki/Valve_Map_Format#Planes>.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Plane {
     pub bottom_left: Vector3<f32>,
     pub top_left: Vector3<f32>,
@@ -33,7 +33,16 @@ impl<'a> Solid<'a> {
         Self { sides }
     }
 
+    /// Translates the inner [`Plane`]. TODO: also translate texture.
     pub fn translate_mut(&mut self, trans: &Vector3<f32>) -> &mut Self {
+        for side in self.sides.iter_mut() {
+            side.translate_mut(trans);
+        }
+        self
+    }
+
+    /// Translates the inner [`Plane`]. Does not maintain allignment of textures relative to the [`Solid`].
+    pub fn translate_mut_ignore_texture(&mut self, trans: &Vector3<f32>) -> &mut Self {
         for side in self.sides.iter_mut() {
             side.translate_mut(trans);
         }
@@ -47,6 +56,7 @@ impl<'a> Side<'a> {
         Self { plane, texture }
     }
 
+    /// Translates each of the [`Plane`]s by a [`Vector3`].
     pub fn translate_mut(&mut self, trans: &Vector3<f32>) -> &mut Self {
         self.plane.translate_mut(trans);
         self
@@ -62,6 +72,7 @@ impl Plane {
         Self { bottom_left, top_left, top_right }
     }
 
+    /// Translates by adding a [`Vector3`] to each of the points.
     pub fn translate_mut(&mut self, trans: &Vector3<f32>) -> &mut Self {
         self.bottom_left += trans;
         self.top_left += trans;

@@ -37,6 +37,7 @@ pub mod prelude {
     pub(crate) use crate::StrType;
 }
 
+/// String type for the library. Might change or be in-lined.
 pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
 
 // preferred rust group order (pub first in the same group)
