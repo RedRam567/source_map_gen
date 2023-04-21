@@ -3,7 +3,7 @@
 
 use crate::{
     generation::region::Room,
-    map::{Map, Side, Solid},
+    map::{Map, Side, Solid, Entity},
     StrType,
 };
 use vmf_parser_nom::ast::{Block, Property, Vmf};
@@ -60,6 +60,17 @@ impl<'a> ToLower<Block<StrType<'a>>> for Solid<'a> {
     }
 }
 
+impl<'a> ToLower<Block<StrType<'a>>> for Entity<StrType<'a>, StrType<'a>> {
+    fn into_lower(self) -> Block<StrType<'a>> {
+        Block {
+            // name: self.classname.into(),
+            name: "entity".into(),
+            props: self.props,
+            blocks: vec![]
+        }
+    }
+}
+
 impl<'a> ToLower<Vmf<StrType<'a>>> for Map<'a> {
     fn into_lower(self) -> Vmf<StrType<'a>> {
         let mut vmf = Vmf::default();
@@ -67,7 +78,7 @@ impl<'a> ToLower<Vmf<StrType<'a>>> for Map<'a> {
         if let Some(cordon) = self.options.cordon.clone() {
             // TODO: add as actual cordon
             solid_blocks
-                .extend(Room::new(cordon).construct_sky().into_iter().map(|s| s.to_lower()));
+                .extend(Room::new(cordon).construct_sky_inside().iter().map(|s| s.to_lower()));
         }
 
         vmf.inner.blocks.push(Block {
@@ -98,10 +109,12 @@ impl<'a> ToLower<Vmf<StrType<'a>>> for Map<'a> {
             props: vec![
                 Property::new("mapversion", "1"),
                 Property::new("classname", "worldspawn"),
-                Property::new("skyname", "sky_day01_01"),
+                Property::new("skyname", self.options.sky_name),
             ],
             blocks: solid_blocks,
         });
+        // ENTS HERE
+        vmf.inner.blocks.extend(self.entities.iter().map(|e| e.to_lower()));
         // cameras unnessesary
         // cordons unnessesary
         vmf

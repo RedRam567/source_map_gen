@@ -96,7 +96,7 @@ impl<T> Vector3<T> {
 }
 
 impl<T: Copy> Vector3<T> {
-    /// Constant clone. `Point::clone()` isn't const for some reason.
+    /// Constant clone. `Vector3::clone()` isn't const for some reason.
     pub const fn const_clone(&self) -> Self {
         Self { ..*self }
     }

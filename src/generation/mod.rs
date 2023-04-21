@@ -40,7 +40,7 @@ use crate::map::{Map, Plane, Side, Solid, Texture, TextureBuilder, Vector3};
 use std::borrow::Cow;
 
 /// Bounds in 3d space.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Bounds<T> {
     pub min: Vector3<T>,
     pub max: Vector3<T>,

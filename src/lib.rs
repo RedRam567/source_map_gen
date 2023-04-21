@@ -27,8 +27,8 @@
 
 pub mod generation;
 pub mod map;
+// pub mod scripting;
 pub mod vmf;
-pub mod scripting;
 
 pub mod prelude {
     pub use crate::map::solid::*;
@@ -51,6 +51,8 @@ pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
 // impl
 // fn
 // mod test {}
+
+// MACROS???
 
 // normal slope stair default
 

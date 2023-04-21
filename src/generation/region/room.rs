@@ -60,6 +60,68 @@ impl<'a> Room<'a> {
 
         [top, bottom, front, back, right, left]
     }
+
+    pub(crate) fn construct_sky_inside(&self) -> [Solid<'a>; 6] {
+        let mut top = self.bounds.clone();
+        top.min.z = top.max.z;
+        top.max.z = top.min.z + WALL_THICKNESS;
+        let top = Map::cube_sky(top);
+        let mut bottom = self.bounds.clone();
+        bottom.max.z = bottom.min.z;
+        bottom.min.z = bottom.max.z - WALL_THICKNESS;
+        let bottom = Map::cube_sky(bottom);
+
+        let mut front = self.bounds.clone();
+        front.min.y = front.max.y;
+        front.max.y = front.min.y + WALL_THICKNESS;
+        let front = Map::cube_sky(front);
+        let mut back = self.bounds.clone();
+        back.max.y = back.min.y;
+        back.min.y = back.max.y - WALL_THICKNESS;
+        let back = Map::cube_sky(back);
+
+        let mut left = self.bounds.clone();
+        left.min.x = left.max.x;
+        left.max.x = left.min.x + WALL_THICKNESS;
+        let left = Map::cube_sky(left);
+        let mut right = self.bounds.clone();
+        right.max.x = right.min.x;
+        right.min.x = right.max.x - WALL_THICKNESS;
+        let right = Map::cube_sky(right);
+
+        [top, bottom, front, back, right, left]
+    }
+
+    pub(crate) fn construct_dev_inside(&self) -> [Solid<'a>; 6] {
+        let mut top = self.bounds.clone();
+        top.min.z = top.max.z;
+        top.max.z = top.min.z + WALL_THICKNESS;
+        let top = Map::cube_dev(top);
+        let mut bottom = self.bounds.clone();
+        bottom.max.z = bottom.min.z;
+        bottom.min.z = bottom.max.z - WALL_THICKNESS;
+        let bottom = Map::cube_dev(bottom);
+
+        let mut front = self.bounds.clone();
+        front.min.y = front.max.y;
+        front.max.y = front.min.y + WALL_THICKNESS;
+        let front = Map::cube_dev(front);
+        let mut back = self.bounds.clone();
+        back.max.y = back.min.y;
+        back.min.y = back.max.y - WALL_THICKNESS;
+        let back = Map::cube_dev(back);
+
+        let mut left = self.bounds.clone();
+        left.min.x = left.max.x;
+        left.max.x = left.min.x + WALL_THICKNESS;
+        let left = Map::cube_dev(left);
+        let mut right = self.bounds.clone();
+        right.max.x = right.min.x;
+        right.min.x = right.max.x - WALL_THICKNESS;
+        let right = Map::cube_dev(right);
+
+        [top, bottom, front, back, right, left]
+    }
 }
 
 #[cfg(test)]
