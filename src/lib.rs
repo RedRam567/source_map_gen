@@ -27,7 +27,7 @@
 
 pub mod generation;
 pub mod map;
-pub mod map2;
+pub mod source;
 pub mod light;
 // pub mod scripting;
 pub mod vmf;

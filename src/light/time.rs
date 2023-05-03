@@ -1,8 +1,11 @@
 use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime, Utc};
-use rgb::{RGBA, RGB};
+use rgb::RGB;
 use spa::{SolarPos, SpaError};
 
-use crate::{light::{pitch_to_rgb, Angles, GlobalLighting}, map2::Color};
+use crate::{
+    // light::{pitch_to_rgb, Angles, GlobalLighting},
+    source::{ColorBrightness}, light::{GlobalLighting, pitch_to_rgb}, map::Angles,
+};
 
 // lat
 // long
@@ -25,6 +28,19 @@ use crate::{light::{pitch_to_rgb, Angles, GlobalLighting}, map2::Color};
 // june 25
 // sep 25
 // dec 24.5
+
+impl Angles {
+    // Assumes +Y is north.
+    // seems good, checked in hammer and irl (scary)
+    pub(crate) fn from_solar_pos(pos: SolarPos) -> Self {
+        let pitch = pos.zenith_angle - 90.0;
+        // angle right from north (azimuth) to angle left from +X/east (yaw)
+        // rem_euclid() means slam into 0..360 range
+        let yaw = (270.0 - pos.azimuth).rem_euclid(360.0);
+        let roll = 0.0;
+        Angles { pitch, yaw, roll }
+    }
+}
 
 pub trait DateTimeUtcExt {
     /// Calculates the timezone offset to a second from a longitude east, and
@@ -90,13 +106,13 @@ pub fn loc_time_to_sun(
     let solar_pos = calc_solar_position_local(lat, lon, datetime)?;
     let mut sun_dir = Angles::from_solar_pos(solar_pos);
     dbg!(sun_dir.pitch);
-    let RGB{ r, g, b} = pitch_to_rgb(-sun_dir.pitch);
+    let RGB { r, g, b } = pitch_to_rgb(-sun_dir.pitch);
     sun_dir.pitch = -sun_dir.pitch.abs();
 
     Ok(GlobalLighting {
-        sun_color: Color::new(r, g, b, 255), // TODO: brightness
+        sun_color: ColorBrightness::new(r, g, b, 255), // TODO: brightness
         sun_dir: sun_dir.clone(),
-        amb_color: Color::new(171, 206, 220, 50), // default l4d2
+        amb_color: ColorBrightness::new(171, 206, 220, 50), // default l4d2
         amb_dir: sun_dir,
         dir_lights: Vec::new(),
     })

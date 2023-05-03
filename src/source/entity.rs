@@ -7,13 +7,34 @@ use vmf_parser_nom::ast::Property;
 
 use crate::{
     map::Entity,
-    map2::{Angles, Color},
+    source::{Angles, ColorBrightness},
     prelude::Vector3,
     vmf::ToLower,
 };
 
 // format keyvalues on valve dev wiki to doc comments:
 // xclip -o -sel clip | sed ':a;N;$!ba;s/\n    //g' | sed '/^$/d' | sed ':a;N;$!ba;s/\n)/)/g' | sed -e 's_^_/// _' -e 's/<.*>//g' -e 's/ (in all games since)//g' -e 's/(/`(/' -e 's/)/)`/'
+
+/// Push strtype if not empty.
+fn props_push_string<'a, S>(props: &mut Vec<Property<S, S>>, key: &'a str, value: S)
+where
+    S: AsRef<str> + From<&'a str>,
+{
+    if !value.as_ref().is_empty() {
+        props.push(Property::new(key, value));
+    }
+}
+
+/// Push value if not default and convert to string.
+fn props_push_value<'a, S, T>(props: &mut Vec<Property<S, S>>, key: &'a str, value: T)
+where
+    S: AsRef<str> + From<&'a str> + From<String>,
+    T: Default + Display + PartialEq,
+{
+    if value != T::default() {
+        props.push(Property::new(key, value.to_string()));
+    }
+}
 
 // TODO:DOCS:
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -47,25 +68,6 @@ pub struct PointEntity<S> {
     pub lag_compensate: bool,
     /// Is Automatic-Aim Target `(is_autoaim_target)` If set to 1, this entity will slow down aiming movement for consoles and joystick controllers when the entity is under the crosshairs.
     pub is_autoaim_target: bool,
-}
-
-fn props_push_string<'a, S>(props: &mut Vec<Property<S, S>>, key: &'a str, value: S)
-where
-    S: AsRef<str> + From<&'a str>,
-{
-    if !value.as_ref().is_empty() {
-        props.push(Property::new(key, value));
-    }
-}
-
-fn props_push_value<'a, S, T>(props: &mut Vec<Property<S, S>>, key: &'a str, value: T)
-where
-    S: AsRef<str> + From<&'a str> + From<String>,
-    T: Default + Display + PartialEq,
-{
-    if value != T::default() {
-        props.push(Property::new(key, value.to_string()));
-    }
 }
 
 // from str and String for cow,
@@ -105,18 +107,18 @@ pub struct LightEnviroment<S> {
     /// Pitch `(pitch)`. Overrides the pitch value in Angles, even if left at 0, so it needs to be specified. Contrary to Angles, the rotation of this pitch is measured counter-clockwise from the horizontal, so that 90 is straight up, while -90 is straight down. (It's simply the negative of a normal pitch value.)
     pub pitch: Option<f64>,
     /// Brightness `(_light)`. Color and brightness of the direct sunlight.
-    pub direct_color: Color,
+    pub direct_color: ColorBrightness,
     /// Ambient `(_ambient)`. Color and brightness of the diffuse skylight.
-    pub amb_color: Color,
+    pub amb_color: ColorBrightness,
 
     /// BrightnessHDR `(_lightHDR)`
     /// Override for Brightness when compiling HDR lighting. Defaults to -1 -1 -1 1, which means "same as LDR".
-    pub direct_color_hdr: Option<Color>,
+    pub direct_color_hdr: Option<ColorBrightness>,
     /// BrightnessScaleHDR `(_lightscaleHDR)` Amount to scale the direct light by when compiling for HDR.
     pub direct_hdr_scale: f64,
 
     /// AmbientHDR (_ambientHDR) Override for Ambient when compiling HDR lighting. Defaults to -1 -1 -1 1, which means "same as LDR".
-    pub amb_color_hdr: Option<Color>,
+    pub amb_color_hdr: Option<ColorBrightness>,
     /// AmbientScaleHDR (_AmbientScaleHDR) Amount to scale the ambient light by when compiling for HDR.
     pub amb_hdr_scale: f64,
 
@@ -140,8 +142,8 @@ impl<S: Default> Default for LightEnviroment<S> {
         Self {
             point_entity: PointEntity::default(),
             pitch: Default::default(),
-            direct_color: Color::new(255, 255, 255, 200),
-            amb_color: Color::new(255, 255, 255, 200),
+            direct_color: ColorBrightness::new(255, 255, 255, 200),
+            amb_color: ColorBrightness::new(255, 255, 255, 200),
             direct_color_hdr: None,
             direct_hdr_scale: 1.0, // scales are is 0.7 by default tested in l4d2 hammer
             amb_color_hdr: None,

@@ -4,9 +4,8 @@ pub mod time;
 use rgb::RGB;
 
 use crate::{
-    map::Entity,
-    map2::{Angles, Color, LightEnviroment, PointEntity},
-    vmf::ToLower,
+    map::{Angles, Entity},
+    source::ColorBrightness,
 };
 
 // TODO: cloudyness
@@ -17,11 +16,11 @@ use crate::{
 /// All information for global lighting
 #[derive(Clone, Debug, PartialEq)]
 pub struct GlobalLighting {
-    pub sun_color: Color,
+    pub sun_color: ColorBrightness,
     pub sun_dir: Angles,
-    pub amb_color: Color,
+    pub amb_color: ColorBrightness,
     pub amb_dir: Angles, // needed?
-    pub dir_lights: Vec<(Color, Angles)>,
+    pub dir_lights: Vec<(ColorBrightness, Angles)>,
 }
 
 // TODO: thing to entity or entity from??
@@ -68,9 +67,9 @@ impl Default for GlobalLighting {
     /// defaults from [`crate::map2::LightEnviroment]
     fn default() -> Self {
         Self {
-            sun_color: Color::new(255, 255, 255, 200),
+            sun_color: ColorBrightness::new(255, 255, 255, 200),
             sun_dir: Angles::default(),
-            amb_color: Color::new(255, 255, 255, 50),
+            amb_color: ColorBrightness::new(255, 255, 255, 50),
             amb_dir: Angles::default(),
             dir_lights: Default::default(),
         }

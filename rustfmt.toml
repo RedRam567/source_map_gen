@@ -10,7 +10,7 @@ use_field_init_shorthand=true
 # overflow_delimited_expr=true # unstable
 
 # 3 import groups, std, externals, crate
-group_imports="StdExternalCrate" # unstable
+# group_imports="StdExternalCrate" # unstable
 # split/merge imports into module-level groups (wish there was a no split option)
 # imports_granularity="Module" # unstable
 # Prevent one super massive derive

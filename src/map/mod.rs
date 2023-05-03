@@ -1,4 +1,4 @@
-//! Representation of a map containing [`Solid`]s and [`Entity`]s.
+//! One step above vmf blocks and properties. [`Solid`]s and [`Entity`]s. Also [`Map`], a group of `Solids` and `Entities`
 
 pub(crate) mod entity;
 pub(crate) mod solid;

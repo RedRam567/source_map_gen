@@ -1,4 +1,7 @@
 //https://cormusa.org/wp-content/uploads/2018/04/CORM_2011_Calculation_of_CCT_and_Duv_and_Practical_Conversion_Formulae.pdf
+// TODO: clean
+
+#![allow(non_snake_case)] // try to avoid some confusion between XYZ and xy
 
 use std::ops::{Deref, DerefMut};
 

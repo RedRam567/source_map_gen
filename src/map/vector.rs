@@ -3,6 +3,23 @@
 use derive_ops::*;
 use std::{fmt::Display, ops::Neg};
 
+// TODO:DOCS: TODO:LOC:
+#[derive(Clone, Default, Debug, PartialEq, PartialOrd)]
+pub struct Angles {
+    /// +down/-up, degrees.
+    pub pitch: f64,
+    /// +left/-right, degrees.
+    pub yaw: f64,
+    /// +clockwise/-counterclockwise, degrees.
+    pub roll: f64,
+}
+
+impl Display for Angles {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.pitch, self.yaw, self.roll)
+    }
+}
+
 /// A point, direction, or translation in 3d space.
 #[derive(AddRef, SubRef, MulRef, DivRef)]
 #[derive(AddAssignRef, SubAssignRef, MulAssignRef, DivAssignRef)]
