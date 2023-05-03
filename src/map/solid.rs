@@ -9,25 +9,6 @@ pub struct Solid<'a> {
     pub sides: Vec<Side<'a>>,
 }
 
-/// A side of a [`Solid`].
-#[derive(Clone, Debug, PartialEq)]
-pub struct Side<'a> {
-    pub plane: Plane,
-    pub texture: Texture<'a>,
-}
-
-// The Valve wiki agrees with that / is kinda vague but in practice it seems like the opposite.
-/// A flat geometric plane.
-/// When looking directly at the plane, `bottom_left` will be in the bottom left
-/// and so on, with the normal being towards you.
-/// See <https://developer.valvesoftware.com/wiki/Valve_Map_Format#Planes>.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Plane {
-    pub bottom_left: Vector3<f32>,
-    pub top_left: Vector3<f32>,
-    pub top_right: Vector3<f32>,
-}
-
 impl<'a> Solid<'a> {
     pub const fn new(sides: Vec<Side<'a>>) -> Self {
         Self { sides }
@@ -49,6 +30,14 @@ impl<'a> Solid<'a> {
         self
     }
 }
+
+/// A side of a [`Solid`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct Side<'a> {
+    pub plane: Plane,
+    pub texture: Texture<'a>,
+}
+
 // TODO: normal, slope, wtf is default
 
 impl<'a> Side<'a> {
@@ -61,6 +50,18 @@ impl<'a> Side<'a> {
         self.plane.translate_mut(trans);
         self
     }
+}
+
+// The Valve wiki agrees with that / is kinda vague but in practice it seems like the opposite.
+/// A flat geometric plane.
+/// When looking directly at the plane, `bottom_left` will be in the bottom left
+/// and so on, with the normal being towards you.
+/// See <https://developer.valvesoftware.com/wiki/Valve_Map_Format#Planes>.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Plane {
+    pub bottom_left: Vector3<f32>,
+    pub top_left: Vector3<f32>,
+    pub top_right: Vector3<f32>,
 }
 
 impl Plane {
@@ -97,14 +98,6 @@ impl Plane {
         self.normal_dir().normalize()
     }
 }
-
-
-// let rx = Vector3::new(x, z, -y); // RX
-// eprintln!("rx {rx:?}");
-// let ry = Vector3::new(-z, y, x); // RY
-// eprintln!("ry {ry:?}");
-// let rz = Vector3::new(y, -x, z); // RZ
-// eprintln!("rz {rz:?}");
 
 impl Display for Plane {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

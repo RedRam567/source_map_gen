@@ -26,11 +26,11 @@
 #![deny(clippy::semicolon_if_nothing_returned)]
 
 pub mod generation;
+pub mod light;
 pub mod map;
 pub mod source;
-pub mod light;
-// pub mod scripting;
 pub mod vmf;
+// pub mod scripting;
 
 pub mod prelude {
     pub use crate::map::solid::*;
