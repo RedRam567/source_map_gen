@@ -1,0 +1,20 @@
+task                            complexity      uncertainty start       expected-case   worst-case  actual
+everything                      insane          medium      2-14-23     1 year          2 years     .
+made time estimate              .               .           2-14-23     .               .           5-3-23
+
+fix orientation/cross product   normal          small       5-3-23      1 day           2 days      .
+shapes                          normal          normal      5-3-23      3 day           2 week      .
+entities                        medium          large       .           1 week          3 weeks     .
+basic cli                       intermediate    medium      .           3 days          1 week      .
+2d proc gen                     large           large       .           6 days          3 weeks     .
+carving
+splitting
+hash grid
+color space
+general proc gen
+building proc gen
+decor proc gen
+
++X Forward
++Y North
++Z Up

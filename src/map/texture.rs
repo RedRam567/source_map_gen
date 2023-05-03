@@ -22,14 +22,14 @@ impl<'a> Texture<'a> {
     }
 
     pub const fn cube_textures(mats: [&str; 6]) -> [Texture; 6] {
-        let [top, bottom, left, right, back, front] = mats;
+        let [top, bottom, west, east, south, north] = mats;
 
         let top = TextureBuilder::new_mat(Cow::Borrowed(top)).top().build();
         let bottom = TextureBuilder::new_mat(Cow::Borrowed(bottom)).bottom().build();
-        let left = TextureBuilder::new_mat(Cow::Borrowed(left)).left().build();
-        let right = TextureBuilder::new_mat(Cow::Borrowed(right)).right().build();
-        let back = TextureBuilder::new_mat(Cow::Borrowed(back)).back().build();
-        let front = TextureBuilder::new_mat(Cow::Borrowed(front)).front().build();
+        let left = TextureBuilder::new_mat(Cow::Borrowed(west)).east().build();
+        let right = TextureBuilder::new_mat(Cow::Borrowed(east)).west().build();
+        let back = TextureBuilder::new_mat(Cow::Borrowed(south)).north().build();
+        let front = TextureBuilder::new_mat(Cow::Borrowed(north)).south().build();
 
         [top, bottom, left, right, back, front]
     }
@@ -73,35 +73,35 @@ impl<'a> TextureBuilder<'a> {
         self.0.light_scale = scale;
         self
     }
-    /// Set the uvmap to the default for a side facing upwards.
+    /// Set the uvmap to the default for a side facing east, +X.
+    pub const fn east(mut self) -> Self {
+        self.0.uaxis = UVAxis::default_east().0;
+        self.0.vaxis = UVAxis::default_east().1;
+        self
+    }
+    /// Set the uvmap to the default for a side facing west, -X.
+    pub const fn west(self) -> Self {
+        self.east()
+    }
+    /// Set the uvmap to the default for a side facing north, +Y.
+    pub const fn north(mut self) -> Self {
+        self.0.uaxis = UVAxis::default_north().0;
+        self.0.vaxis = UVAxis::default_north().1;
+        self
+    }
+    /// Set the uvmap to the default for a side facing south -Y.
+    pub const fn south(self) -> Self {
+        self.north()
+    }
+    /// Set the uvmap to the default for a side facing upwards +Z.
     pub const fn top(mut self) -> Self {
         self.0.uaxis = UVAxis::default_top().0;
         self.0.vaxis = UVAxis::default_top().1;
         self
     }
-    /// Set the uvmap to the default for a side facing downwards.
+    /// Set the uvmap to the default for a side facing downwards -Z.
     pub const fn bottom(self) -> Self {
         self.top()
-    }
-    /// Set the uvmap to the default for a side facing left.
-    pub const fn left(mut self) -> Self {
-        self.0.uaxis = UVAxis::default_left().0;
-        self.0.vaxis = UVAxis::default_left().1;
-        self
-    }
-    /// Set the uvmap to the default for a side facing right.
-    pub const fn right(self) -> Self {
-        self.left()
-    }
-    /// Set the uvmap to the default for a side facing backwards.
-    pub const fn back(mut self) -> Self {
-        self.0.uaxis = UVAxis::default_back().0;
-        self.0.vaxis = UVAxis::default_back().1;
-        self
-    }
-    /// Set the uvmap to the default for a side facing forwards.
-    pub const fn front(self) -> Self {
-        self.back()
     }
     /// Set an arbitrary uvmap.
     pub const fn uv(mut self, uaxis: UVAxis<f32>, vaxis: UVAxis<f32>) -> Self {
@@ -137,6 +137,30 @@ impl<T> UVAxis<T> {
 }
 
 impl UVAxis<f32> {
+    /// Return the uvmap for a side facing left.
+    pub const fn default_east() -> (Self, Self) {
+        (
+            Self { x: 0.0, y: 1.0, z: 0.0, trans: 0.0, scale: 0.25 },
+            Self { x: 0.0, y: 0.0, z: -1.0, trans: 0.0, scale: 0.25 },
+        )
+    }
+    /// Return the uvmap for a side facing right.
+    pub const fn default_west() -> (Self, Self) {
+        Self::default_east()
+    }
+
+    /// Return the uvmap for a side facing backwards.
+    pub const fn default_north() -> (Self, Self) {
+        (
+            Self { x: 1.0, y: 0.0, z: 0.0, trans: 0.0, scale: 0.25 },
+            Self { x: 0.0, y: 0.0, z: -1.0, trans: 0.0, scale: 0.25 },
+        )
+    }
+    /// Return the uvmap for a side facing forwards.
+    pub const fn default_south() -> (Self, Self) {
+        Self::default_north()
+    }
+
     /// Return the uvmap for a side facing upwards.
     pub const fn default_top() -> (Self, Self) {
         (
@@ -149,30 +173,6 @@ impl UVAxis<f32> {
         Self::default_top()
     }
 
-    /// Return the uvmap for a side facing left.
-    pub const fn default_left() -> (Self, Self) {
-        (
-            Self { x: 0.0, y: 1.0, z: 0.0, trans: 0.0, scale: 0.25 },
-            Self { x: 0.0, y: 0.0, z: -1.0, trans: 0.0, scale: 0.25 },
-        )
-    }
-    /// Return the uvmap for a side facing right.
-    pub const fn default_right() -> (Self, Self) {
-        Self::default_left()
-    }
-
-    /// Return the uvmap for a side facing backwards.
-    pub const fn default_back() -> (Self, Self) {
-        (
-            Self { x: 1.0, y: 0.0, z: 0.0, trans: 0.0, scale: 0.25 },
-            Self { x: 0.0, y: 0.0, z: -1.0, trans: 0.0, scale: 0.25 },
-        )
-    }
-    /// Return the uvmap for a side facing forwards.
-    pub const fn default_front() -> (Self, Self) {
-        Self::default_back()
-    }
-
     /// Gives the uv for the closest axis for a normal of a plane.
     /// `normal` does not need to be normalized.
     /// See: [`Vector3::greatest_axis`]
@@ -180,8 +180,8 @@ impl UVAxis<f32> {
         let normal_abs = normal.abs();
         let axis = normal_abs.greatest_axis();
         match axis {
-            Axis3::X => Self::default_left(),
-            Axis3::Y => Self::default_back(),
+            Axis3::X => Self::default_east(),
+            Axis3::Y => Self::default_north(),
             Axis3::Z => Self::default_top(),
         }
     }

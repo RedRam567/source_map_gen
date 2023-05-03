@@ -1,6 +1,7 @@
 //! Module handles generating a map
 
 pub mod region;
+pub mod shape;
 
 use region::*;
 
@@ -9,32 +10,33 @@ pub const MAT_DEV_FLOOR: &str = "DEV/DEV_MEASUREGENERIC01B";
 pub const MAT_3D_SKY: &str = "TOOLS/TOOLSSKYBOX";
 pub const LIGHTMAP_SCALE: u8 = 16;
 pub const MAT_SCALE: f32 = 0.25;
+// pub const WALL_THICKNESS: f32 = 8.0;
 
+pub static DEV_EAST: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).east().build();
+pub static DEV_WEST: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).west().build();
+pub static DEV_NORTH: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).north().build();
+pub static DEV_SOUTH: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).south().build();
 pub static DEV_TOP: Texture<'static> =
     TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_FLOOR)).top().build();
 pub static DEV_BOTTOM: Texture<'static> =
     TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_FLOOR)).bottom().build();
-pub static DEV_LEFT: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).left().build();
-pub static DEV_RIGHT: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).right().build();
-pub static DEV_BACK: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).back().build();
-pub static DEV_FRONT: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).front().build();
 
+pub static SKY_EAST: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).east().build();
+pub static SKY_WEST: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).west().build();
+pub static SKY_NORTH: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).north().build();
+pub static SKY_SOUTH: Texture<'static> =
+    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).south().build();
 pub static SKY_TOP: Texture<'static> =
     TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).top().build();
 pub static SKY_BOTTOM: Texture<'static> =
     TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).bottom().build();
-pub static SKY_LEFT: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).left().build();
-pub static SKY_RIGHT: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).right().build();
-pub static SKY_BACK: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).back().build();
-pub static SKY_FRONT: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).front().build();
 
 use crate::map::{Map, Plane, Side, Solid, Texture, TextureBuilder, Vector3};
 use std::borrow::Cow;
@@ -146,16 +148,16 @@ impl<'a> Map<'a> {
         let textures = [
             SKY_TOP.clone(),
             SKY_BOTTOM.clone(),
-            SKY_LEFT.clone(),
-            SKY_RIGHT.clone(),
-            SKY_BACK.clone(),
-            SKY_FRONT.clone(),
+            SKY_EAST.clone(),
+            SKY_WEST.clone(),
+            SKY_NORTH.clone(),
+            SKY_SOUTH.clone(),
         ];
         Self::cube_owned(bounds, textures)
     }
 
     pub fn cube_dev1(bounds: Bounds<f32>) -> Solid<'a> {
-        let textures = [&DEV_TOP, &DEV_BOTTOM, &DEV_LEFT, &DEV_RIGHT, &DEV_BACK, &DEV_FRONT];
+        let textures = [&DEV_TOP, &DEV_BOTTOM, &DEV_EAST, &DEV_WEST, &DEV_NORTH, &DEV_SOUTH];
         Self::cube(bounds, textures)
     }
 
@@ -175,10 +177,10 @@ impl<'a> Map<'a> {
         let textures = [
             DEV_TOP.clone(),
             DEV_BOTTOM.clone(),
-            DEV_LEFT.clone(),
-            DEV_RIGHT.clone(),
-            DEV_BACK.clone(),
-            DEV_FRONT.clone(),
+            DEV_EAST.clone(),
+            DEV_WEST.clone(),
+            DEV_NORTH.clone(),
+            DEV_SOUTH.clone(),
         ];
         Self::cube_owned(bounds, textures)
     }
@@ -222,10 +224,10 @@ impl<'a> Map<'a> {
 
         let top = TextureBuilder::new_mat(Cow::Borrowed(top)).top().build();
         let bottom = TextureBuilder::new_mat(Cow::Borrowed(bottom)).bottom().build();
-        let left = TextureBuilder::new_mat(Cow::Borrowed(left)).left().build();
-        let right = TextureBuilder::new_mat(Cow::Borrowed(right)).right().build();
-        let back = TextureBuilder::new_mat(Cow::Borrowed(back)).back().build();
-        let front = TextureBuilder::new_mat(Cow::Borrowed(front)).front().build();
+        let left = TextureBuilder::new_mat(Cow::Borrowed(left)).east().build();
+        let right = TextureBuilder::new_mat(Cow::Borrowed(right)).west().build();
+        let back = TextureBuilder::new_mat(Cow::Borrowed(back)).north().build();
+        let front = TextureBuilder::new_mat(Cow::Borrowed(front)).south().build();
 
         let textures = [top, bottom, left, right, back, front];
         Solid::new(

@@ -136,10 +136,10 @@ mod tests {
         let truth = [
             UVAxis::default_top(),
             UVAxis::default_top(),
-            UVAxis::default_left(),
-            UVAxis::default_left(),
-            UVAxis::default_back(),
-            UVAxis::default_back(),
+            UVAxis::default_east(),
+            UVAxis::default_east(),
+            UVAxis::default_north(),
+            UVAxis::default_north(),
         ];
         let bounds = Bounds::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 1.0, 1.0));
         let normals: Vec<_> =
@@ -157,10 +157,10 @@ mod tests {
         let truth = [
             UVAxis::default_top(),
             UVAxis::default_top(),
-            UVAxis::default_left(),
-            UVAxis::default_left(),
-            UVAxis::default_back(),
-            UVAxis::default_back(),
+            UVAxis::default_east(),
+            UVAxis::default_east(),
+            UVAxis::default_north(),
+            UVAxis::default_north(),
         ];
         let bounds = Bounds::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 1.0, 1.0));
         let normals: Vec<_> =

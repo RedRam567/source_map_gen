@@ -1,0 +1,67 @@
+make cli gen
+    merge pallet
+    cli related lib/fns, split, carve, etc
+    scripting language
+delete color space subcrate
+
+freaking get color working
+    just get basic stuff
+
+shapes
+    wedges
+    spikes
+    cylinders
+    arches
+    spheres
+
+entities
+
+GET BASIC PROC GEN
+    just make rooms in 2d
+    hmm need carving
+
+carving
+    wall: group of 2d regions?/solids
+    can carve away windows/attached rooms
+
+general splitting
+
+ideas
+    config for decor/geometry/contraints
+        only 1 bike shop per 3000 units or whatever
+        1 bridge/crensdo
+    config files for games, make payload/l4d2/koth.
+    flow
+        create flow from all team spawns (edges = zombies) to other team spawns and objectives
+        prune/dont allow too far areas
+        replace straight areas or add junk
+        make dead ends, loops
+            what if there was a party/goof off area in orange, in dead space or N/S
+            or some more sideways, 5 lines, wobbly asdnjasdn idk stuff
+        sniper spots/engie spots
+        class specific spawn points
+
+    pvs?
+        mindfull of sniper sightlines
+        dont make too big for lag (orange renders the whole dang map)
+        horizontal hint for common roof height and notable walls
+
+    node/region based generation
+        you make biggest rooms/regions and fills the rest
+        Astar with randomization?
+
+    decor
+        decals, smoke, fog, sound, env sound, speech target stuff
+        orator, cutscrense, choreography
+        skybox clouds, smoke, fire
+        music theme
+        wind
+        PAPERS BLOWING WOULD BE AMAZING
+
+    general decider/constrainer
+        weighted based on all
+            forest + spooky + alone sum score, choose random then
+        urban = 25% e1m1 or 50% urban or 25% normal
+        swamp = swamp fever or spooky
+        forest = spooky
+        rarity?
