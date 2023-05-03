@@ -41,20 +41,6 @@ pub struct MapTree<'a> {
     pub theme: Theme,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Theme {
-    // maps, regions, roads, buildings, floors, rooms
-    pub max_level: u8,
-    pub rand: ChaCha8Rng,
-}
-
-impl Theme {
-    pub fn new(num_levels: u8, seed: u64) -> Self {
-        let rand = ChaCha8Rng::seed_from_u64(seed);
-        Self { max_level: num_levels, rand }
-    }
-}
-
 impl<'a> MapTree<'a> {
     // bounds of the enitre level
     pub fn new(bounds: Bounds<f32>, theme: Theme) -> Self {
@@ -81,6 +67,20 @@ impl<'a> MapTree<'a> {
     pub(crate) fn build_level_0(&mut self) {
         let root = self.root;
         // root.ad
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Theme {
+    // maps, regions, roads, buildings, floors, rooms
+    pub max_level: u8,
+    pub rand: ChaCha8Rng,
+}
+
+impl Theme {
+    pub fn new(num_levels: u8, seed: u64) -> Self {
+        let rand = ChaCha8Rng::seed_from_u64(seed);
+        Self { max_level: num_levels, rand }
     }
 }
 

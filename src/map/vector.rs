@@ -3,6 +3,14 @@
 use derive_ops::*;
 use std::{fmt::Display, ops::Neg};
 
+/// One of 3 axes, X, Y, Z.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Axis3 {
+    X,
+    Y,
+    Z,
+}
+
 // TODO:DOCS: TODO:LOC:
 #[derive(Clone, Default, Debug, PartialEq, PartialOrd)]
 pub struct Angles {
@@ -28,14 +36,6 @@ pub struct Vector3<T> {
     pub x: T,
     pub y: T,
     pub z: T,
-}
-
-/// One of 3 axes, X, Y, Z.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Axis3 {
-    X,
-    Y,
-    Z,
 }
 
 impl Vector3<f32> {

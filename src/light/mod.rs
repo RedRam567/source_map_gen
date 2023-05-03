@@ -1,4 +1,4 @@
-pub mod colorspaces;
+pub mod colorspace;
 pub mod time;
 
 use rgb::RGB;
@@ -81,12 +81,12 @@ pub fn pitch_to_rgb(pitch: f64) -> RGB<u8> {
     let rgb = if pitch < 0.0 {
         // TODO: add more green or smth
         let mut srgb_linear =
-            colorspaces::cct_to_xy(night_pitch_to_temp(-pitch)).to_xyz(50.0).to_rgb();
+            colorspace::cct_to_xy(night_pitch_to_temp(-pitch)).to_xyz(50.0).to_rgb();
         srgb_linear.normalize_mut();
         srgb_linear.to_srgb()
     } else {
         let mut srgb_linear =
-            colorspaces::cct_to_xy(day_pitch_to_temp(pitch)).to_xyz(50.0).to_rgb();
+            colorspace::cct_to_xy(day_pitch_to_temp(pitch)).to_xyz(50.0).to_rgb();
         srgb_linear.normalize_mut();
         srgb_linear.to_srgb()
     };

@@ -11,22 +11,6 @@ pub struct Texture<'a> {
     pub light_scale: u8,
 }
 
-/// Texture transformation matrix. `x` is how much the X axis affects the `UVAxis`, similar for `y` and `z`.
-/// `trans` is a translation along the axis.
-/// `scale` seems to multiply the output result.
-/// <https://developer.valvesoftware.com/wiki/Valve_Map_Format#U.2FV_Axis>
-#[derive(Clone, Debug, PartialEq)]
-pub struct UVAxis<T> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
-    pub trans: T,
-    pub scale: T,
-}
-
-#[repr(transparent)]
-pub struct TextureBuilder<'a>(Texture<'a>);
-
 impl<'a> Texture<'a> {
     pub const fn new(
         material: StrType<'a>,
@@ -50,6 +34,10 @@ impl<'a> Texture<'a> {
         [top, bottom, left, right, back, front]
     }
 }
+
+// TODO: trash it? and just do default + spread and builder trait or smth
+#[repr(transparent)]
+pub struct TextureBuilder<'a>(Texture<'a>);
 
 impl<'a> TextureBuilder<'a> {
     pub const fn new() -> Self {
@@ -115,12 +103,31 @@ impl<'a> TextureBuilder<'a> {
     pub const fn front(self) -> Self {
         self.back()
     }
-    /// Set the arbitrary uvmap.
+    /// Set an arbitrary uvmap.
     pub const fn uv(mut self, uaxis: UVAxis<f32>, vaxis: UVAxis<f32>) -> Self {
         self.0.uaxis = uaxis;
         self.0.vaxis = vaxis;
         self
     }
+}
+
+impl<'a> Default for TextureBuilder<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Texture transformation matrix. `x` is how much the X axis affects the `UVAxis`, similar for `y` and `z`.
+/// `trans` is a translation along the axis.
+/// `scale` seems to multiply the output result.
+/// <https://developer.valvesoftware.com/wiki/Valve_Map_Format#U.2FV_Axis>
+#[derive(Clone, Debug, PartialEq)]
+pub struct UVAxis<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+    pub trans: T,
+    pub scale: T,
 }
 
 impl<T> UVAxis<T> {
@@ -216,11 +223,5 @@ impl UVAxis<f32> {
 impl<T: Display> Display for UVAxis<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[{} {} {} {}] {}", self.x, self.y, self.z, self.trans, self.scale)
-    }
-}
-
-impl<'a> Default for TextureBuilder<'a> {
-    fn default() -> Self {
-        Self::new()
     }
 }

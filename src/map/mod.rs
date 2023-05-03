@@ -9,17 +9,10 @@ pub use entity::*;
 pub use solid::*;
 pub use texture::*;
 pub use vector::*;
-use vmf_parser_nom::ast::Property;
 
 use crate::{generation::Bounds, StrType};
+use vmf_parser_nom::ast::Property;
 
-/// The entire world, consiting of [`Solid`]s, [`Entity`]s, and global info
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct Map<'a> {
-    pub options: MapOptions,
-    pub solids: Vec<Solid<'a>>,
-    pub entities: Vec<Entity<StrType<'a>>>,
-}
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct MapOptions {
@@ -31,6 +24,25 @@ pub struct MapOptions {
     // TODO: skybox, detail texture, name or smth
     pub sky_name: String,
     // TODO: ooo aditional files, nav, missions or smth, pop
+}
+
+impl MapOptions {
+    pub fn defaults_l4d2(&mut self) -> &mut Self {
+        self.sky_name = "sky_l4d_rural02_hdr".to_string();
+        self
+    }
+    pub fn defaults_tf2(&mut self) -> &mut Self {
+        self.sky_name = "sky_day01_01".to_string();
+        self
+    }
+}
+
+/// The entire world, consiting of [`Solid`]s, [`Entity`]s, and global info
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Map<'a> {
+    pub options: MapOptions,
+    pub solids: Vec<Solid<'a>>,
+    pub entities: Vec<Entity<StrType<'a>>>,
 }
 
 impl<'a> Map<'a> {
@@ -50,24 +62,12 @@ impl<'a> Map<'a> {
                 Property::new("_ambientHDR", "-1 -1 -1 1"),
                 Property::new("_ambient", "171 206 220 50"),
                 Property::new("classname", "light_environment"),
-
             ],
         });
         self
     }
     pub fn defaults_tf2(&mut self) -> &mut Self {
         self.options.sky_name = "sky_day01_01".to_string();
-        self
-    }
-}
-
-impl MapOptions {
-    pub fn defaults_l4d2(&mut self) -> &mut Self {
-        self.sky_name = "sky_l4d_rural02_hdr".to_string();
-        self
-    }
-    pub fn defaults_tf2(&mut self) -> &mut Self {
-        self.sky_name = "sky_day01_01".to_string();
         self
     }
 }
