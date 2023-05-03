@@ -18,7 +18,7 @@ use crate::{generation::Bounds, StrType};
 pub struct Map<'a> {
     pub options: MapOptions,
     pub solids: Vec<Solid<'a>>,
-    pub entities: Vec<Entity<StrType<'a>, StrType<'a>>>,
+    pub entities: Vec<Entity<StrType<'a>>>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

@@ -108,7 +108,7 @@ impl Plane {
 
 impl Display for Plane {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} {}", self.bottom_left, self.top_left, self.top_right)
+        write!(f, "({}) ({}) ({})", self.bottom_left, self.top_left, self.top_right)
     }
 }
 

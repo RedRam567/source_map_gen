@@ -104,7 +104,7 @@ impl<T: Copy> Vector3<T> {
 
 impl<T: Display> Display for Vector3<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({} {} {})", self.x, self.y, self.z)
+        write!(f, "{} {} {}", self.x, self.y, self.z)
     }
 }
 

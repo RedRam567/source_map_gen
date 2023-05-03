@@ -1,8 +1,5 @@
-use std::io::Read;
-
 use proc_gen2::generation::{region::Room, Bounds};
 use proc_gen2::map::{Map, Vector3};
-use rhai::{Engine, Dynamic};
 
 fn main() {
     let _map = Map::default();
@@ -27,11 +24,11 @@ fn main() {
 
     // let vmf = vmf_parser_nom::parse::<&str, ()>("abc123").unwrap();
 
-    let engine = Engine::new();
-    let mut input = String::new();
-    std::io::stdin().read_to_string(&mut input).unwrap();
-    let output = engine.eval::<Dynamic>(&input).unwrap();
-    eprintln!("{output}");
+    // let engine = Engine::new();
+    // let mut input = String::new();
+    // std::io::stdin().read_to_string(&mut input).unwrap();
+    // let output = engine.eval::<Dynamic>(&input).unwrap();
+    // eprintln!("{output}");
 }
 
 // // extern crate kiss3d;

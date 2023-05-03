@@ -1,18 +1,23 @@
 //! Vmf format traits and impls.
 //! See [`vmfparser`] crate.
 
+use vmf_parser_nom::ast::{Block, Property, Vmf};
+
 use crate::{
     generation::region::Room,
-    map::{Map, Side, Solid, Entity},
+    map::{Entity, Map, Side, Solid},
     StrType,
 };
-use vmf_parser_nom::ast::{Block, Property, Vmf};
 
 /// Convert to a lower level of abstraction.
 /// Example: A [`Solid`](crate::map::solid::Solid) into a [`Block`](vmf_parser_nom::ast::Block).
 pub trait ToLower<T>: Clone {
     /// Convert to a lower level of abstraction. See [`ToLower`]
-    fn into_lower(self) -> T;
+    fn into_lower(self) -> T
+    {
+        self.to_lower()
+    }
+
     /// Convert to an owned lower level of abstraction. See [`ToLower`]
     fn to_lower(&self) -> T {
         self.clone().into_lower()
@@ -31,7 +36,8 @@ pub trait ToHigher<T>: Clone {
 }
 
 impl<'a> ToLower<Block<StrType<'a>>> for Side<'a> {
-    fn into_lower(self) -> Block<StrType<'a>> {
+    fn into_lower(self) -> Block<StrType<'a>>
+    {
         let props = vec![
             // id unnecessary as [`vmf_parser_nom`] can generate new ids
             Property::new("plane", self.plane.to_string()),
@@ -50,7 +56,8 @@ impl<'a> ToLower<Block<StrType<'a>>> for Side<'a> {
 }
 
 impl<'a> ToLower<Block<StrType<'a>>> for Solid<'a> {
-    fn into_lower(self) -> Block<StrType<'a>> {
+    fn into_lower(self) -> Block<StrType<'a>>
+    {
         Block {
             name: "solid".into(),
             // id unnecessary as [`vmf_parser_nom`] can generate new ids
@@ -60,19 +67,21 @@ impl<'a> ToLower<Block<StrType<'a>>> for Solid<'a> {
     }
 }
 
-impl<'a> ToLower<Block<StrType<'a>>> for Entity<StrType<'a>, StrType<'a>> {
-    fn into_lower(self) -> Block<StrType<'a>> {
+impl<'a> ToLower<Block<StrType<'a>>> for Entity<StrType<'a>> {
+    fn into_lower(self) -> Block<StrType<'a>>
+    {
         Block {
             // name: self.classname.into(),
             name: "entity".into(),
             props: self.props,
-            blocks: vec![]
+            blocks: vec![],
         }
     }
 }
 
 impl<'a> ToLower<Vmf<StrType<'a>>> for Map<'a> {
-    fn into_lower(self) -> Vmf<StrType<'a>> {
+    fn into_lower(self) -> Vmf<StrType<'a>>
+    {
         let mut vmf = Vmf::default();
         let mut solid_blocks: Vec<_> = self.solids.iter().map(|s| s.to_lower()).collect();
         if let Some(cordon) = self.options.cordon.clone() {
@@ -92,7 +101,9 @@ impl<'a> ToLower<Vmf<StrType<'a>>> for Map<'a> {
             ],
             blocks: vec![],
         });
-        vmf.inner.blocks.push(Block { name: "visgroups".into(), props: vec![], blocks: vec![] });
+        vmf.inner
+            .blocks
+            .push(Block { name: "visgroups".into(), props: vec![], blocks: vec![] });
         vmf.inner.blocks.push(Block {
             name: "viewsettings".into(),
             props: vec![

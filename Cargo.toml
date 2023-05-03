@@ -12,13 +12,19 @@ vmf_parser_nom = { path = "../vmf_parser_nom" }
 
 indextree = "4.5"
 rand_chacha = "0.3"
+# colorspaces:
+rgb = "0.8"
+# time:
+spa = "0.3"
+chrono = "0.4.24"
+
 # rhai = { version = "1.12", features = ["only_i32"] }
 # rhai = { version = "1.12", features = ["only_i32", "no_closure"] }
 # rhai = { version = "1.12", features = ["only_i32", "no_closure", "no_custom_syntax"] }
 # rhai = { version = "1.12", features = ["only_i32", "no_closure", "no_custom_syntax", "no_time", "unchecked", "no_module"] }
 # rhai = { version = "1.12", features = ["sync", "only_i32", "no_closure", "no_custom_syntax", "no_time", "unchecked", "no_module"] }
 
-rhai = { version = "1.12", features = ["sync", "only_i32", "no_custom_syntax"] }
+# rhai = { version = "1.12", features = ["sync", "only_i32", "no_custom_syntax"] } # latest
 # rhai = "1.12"
 
 # kiss3d = "0.35"
