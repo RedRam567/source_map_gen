@@ -1,7 +1,8 @@
 //! Solids, brushes, peices of map geometry.
 
-use std::fmt::Display;
+use crate::generation::shape::SolidOptions;
 use crate::prelude::*;
+use std::fmt::Display;
 
 /// A peice of map geometry made out of sides. Ex: a cube, cylinder.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -45,6 +46,14 @@ impl<'a> Side<'a> {
         Self { plane, texture }
     }
 
+    pub fn new_points(
+        bl: Vector3<f32>, tl: Vector3<f32>, tr: Vector3<f32>, material: &Material<'a>,
+        options: &SolidOptions,
+    ) -> Self {
+        Plane::new_with_round(bl, tl, tr, options.allow_frac)
+            .with_mat_align(material, options.world_align)
+    }
+
     /// Translates each of the [`Plane`]s by a [`Vector3`].
     pub fn translate_mut(&mut self, trans: &Vector3<f32>) -> &mut Self {
         self.plane.translate_mut(trans);
@@ -66,11 +75,20 @@ pub struct Plane {
 
 impl Plane {
     pub const fn new(
-        bottom_left: Vector3<f32>,
-        top_left: Vector3<f32>,
-        top_right: Vector3<f32>,
+        bottom_left: Vector3<f32>, top_left: Vector3<f32>, top_right: Vector3<f32>,
     ) -> Self {
         Self { bottom_left, top_left, top_right }
+    }
+
+    pub fn new_with_round(
+        mut bl: Vector3<f32>, mut tl: Vector3<f32>, mut tr: Vector3<f32>, allow_frac: bool,
+    ) -> Self {
+        if !allow_frac {
+            bl = bl.round();
+            tl = tl.round();
+            tr = tr.round();
+        }
+        Self::new(bl, tl, tr)
     }
 
     /// Translates by adding a [`Vector3`] to each of the points.
@@ -96,6 +114,37 @@ impl Plane {
     /// See [`Plane`].
     pub fn normal(&self) -> Vector3<f32> {
         self.normal_dir().normalize()
+    }
+
+    pub fn with_texture<'a>(self, texture: &Texture<'a>) -> Side<'a> {
+        Side::new(self, texture.clone())
+    }
+
+    pub fn with_mat<'a>(self, material: &Material<'a>) -> Side<'a> {
+        let normal = self.normal_dir();
+        let (uaxis, vaxis) = UVAxis::from_norm(&normal);
+        let Material { material, light_scale } = material.clone();
+        Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
+    }
+
+    pub fn with_mat_align_world<'a>(self, material: &Material<'a>) -> Side<'a> {
+        let normal = self.normal_dir();
+        let (uaxis, vaxis) = UVAxis::from_norm_align_world(&normal);
+        let Material { material, light_scale } = material.clone();
+        Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
+    }
+
+    pub fn with_mat_align<'a>(
+        self, material: &Material<'a>, world_align: bool,
+    ) -> Side<'a> {
+        let normal = self.normal_dir();
+        let (uaxis, vaxis) = if world_align {
+            UVAxis::from_norm_align_world(&normal)
+        } else {
+            UVAxis::from_norm(&normal)
+        };
+        let Material { material, light_scale } = material.clone();
+        Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
     }
 }
 

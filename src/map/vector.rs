@@ -3,6 +3,8 @@
 use derive_ops::*;
 use std::{fmt::Display, ops::Neg};
 
+use crate::generation::shape::SolidOptions;
+
 /// One of 3 axes, X, Y, Z.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Axis3 {
@@ -31,7 +33,7 @@ impl Display for Angles {
 /// A point, direction, or translation in 3d space.
 #[derive(AddRef, SubRef, MulRef, DivRef)]
 #[derive(AddAssignRef, SubAssignRef, MulAssignRef, DivAssignRef)]
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Vector3<T> {
     pub x: T,
     pub y: T,
@@ -39,9 +41,35 @@ pub struct Vector3<T> {
 }
 
 impl Vector3<f32> {
+    pub fn new_option(options: SolidOptions, mut x: f32, mut y: f32, mut z: f32) -> Self {
+        let allow_frac = options.allow_frac;
+        if !allow_frac {
+            x = x.round();
+            y = y.round();
+            z = z.round();
+        }
+        Self::new(x, y, z)
+    }
+
     /// Absolute value of each of the components.
-    pub fn abs(&self) -> Self {
+    pub fn abs(self) -> Self {
         Self { x: self.x.abs(), y: self.y.abs(), z: self.z.abs() }
+    }
+
+    pub fn round(self) -> Self {
+        let mut x = self.x.round();
+        let mut y = self.y.round();
+        let mut z = self.z.round();
+        if x == -0.0 {
+            x = 0.0;
+        }
+        if y == -0.0 {
+            y = 0.0;
+        }
+        if z == -0.0 {
+            z = 0.0;
+        }
+        Self { x, y, z }
     }
 
     /// The length of the vector.
@@ -49,18 +77,27 @@ impl Vector3<f32> {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
     }
 
-    // /// The dot product
-    // pub fn dot(&self, other: &Self) -> f32 {
-    //     self.x * other.x + self.y * other.y + self.z * other.z
-    // }
+    /// The dot product.
+    pub fn dot(&self, other: &Self) -> f32 {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    /// The distance between two 3d points.
+    pub fn dist(&self, other: &Self) -> f32 {
+        // sqrt(dx^2 + dy^2 + dz^2)
+        let x = self.x - other.x;
+        let y = self.y - other.y;
+        let z = self.z - other.z;
+        f32::sqrt(x * x + y * y + z * z)
+    }
 
     // x=1,y=2,z=3, i=x axis, j=y axis, k=z axis (right handed z up)
     /// Calculate the cross product, basically the normal.
-    /// [https://en.wikipedia.org/wiki/Cross_product#Computing](https://en.wikipedia.org/wiki/Cross_product#Computing)
+    /// <https://en.wikipedia.org/wiki/Cross_product#Computing>
     pub fn cross(&self, other: &Self) -> Self {
         Self {
             x: self.y * other.z - self.z * other.y,
-            y: -(self.x * other.z - self.z * other.x),
+            y: self.z * other.x - self.x * other.z,
             z: self.x * other.y - self.y * other.x,
         }
     }
@@ -117,6 +154,11 @@ impl<T: Copy> Vector3<T> {
     pub const fn const_clone(&self) -> Self {
         Self { ..*self }
     }
+
+    // TODO: From and as
+    pub const fn into_vector2(self) -> Vector2<T> {
+        Vector2 { x: self.x, y: self.y }
+    }
 }
 
 impl<T: Display> Display for Vector3<T> {
@@ -130,6 +172,32 @@ impl<T: Neg<Output = T>> Neg for Vector3<T> {
 
     fn neg(self) -> Self::Output {
         Self { x: -self.x, y: -self.y, z: -self.z }
+    }
+}
+
+/// A point, direction, or translation in 2d space.
+#[derive(AddRef, SubRef, MulRef, DivRef)]
+#[derive(AddAssignRef, SubAssignRef, MulAssignRef, DivAssignRef)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Vector2<T> {
+    pub x: T,
+    pub y: T,
+}
+
+impl<T> Vector2<T> {
+    pub const fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+
+impl<T: Copy> Vector2<T> {
+    /// Constant clone. `Vector2::clone()` isn't const for some reason.
+    pub const fn const_clone(&self) -> Self {
+        Self { ..*self }
+    }
+
+    pub const fn with_z(self, z: T) -> Vector3<T> {
+        Vector3 { x: self.x, y: self.y, z }
     }
 }
 

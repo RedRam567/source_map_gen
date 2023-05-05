@@ -163,12 +163,12 @@ impl<'a> Map<'a> {
 
     pub fn cube_dev3(bounds: Bounds<f32>) -> Solid<'a> {
         let textures = Texture::cube_textures([
+            MAT_DEV_WALL,
+            MAT_DEV_WALL,
+            MAT_DEV_WALL,
+            MAT_DEV_WALL,
             MAT_DEV_FLOOR,
             MAT_DEV_FLOOR,
-            MAT_DEV_WALL,
-            MAT_DEV_WALL,
-            MAT_DEV_WALL,
-            MAT_DEV_WALL,
         ]);
         Self::cube_owned(bounds, textures)
     }

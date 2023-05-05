@@ -37,12 +37,12 @@ impl<'a> Room<'a> {
     }
 
     pub(crate) fn construct_sky(&self) -> [Solid<'a>; 6] {
-        let mut top = self.bounds.clone();
-        top.min.z = top.max.z - WALL_THICKNESS;
-        let top = Map::cube_sky(top);
-        let mut bottom = self.bounds.clone();
-        bottom.max.z = bottom.min.z + WALL_THICKNESS;
-        let bottom = Map::cube_sky(bottom);
+        let mut east = self.bounds.clone();
+        east.min.x = east.max.x - WALL_THICKNESS;
+        let east = Map::cube_sky(east);
+        let mut west = self.bounds.clone();
+        west.max.x = west.min.x + WALL_THICKNESS;
+        let west = Map::cube_sky(west);
 
         let mut north = self.bounds.clone();
         north.min.y = north.max.y - WALL_THICKNESS;
@@ -51,14 +51,14 @@ impl<'a> Room<'a> {
         south.max.y = south.min.y + WALL_THICKNESS;
         let south = Map::cube_sky(south);
 
-        let mut east = self.bounds.clone();
-        east.min.x = east.max.x - WALL_THICKNESS;
-        let east = Map::cube_sky(east);
-        let mut west = self.bounds.clone();
-        west.max.x = west.min.x + WALL_THICKNESS;
-        let west = Map::cube_sky(west);
-
-        [top, bottom, north, south, east, west]
+        let mut top = self.bounds.clone();
+        top.min.z = top.max.z - WALL_THICKNESS;
+        let top = Map::cube_sky(top);
+        let mut bottom = self.bounds.clone();
+        bottom.max.z = bottom.min.z + WALL_THICKNESS;
+        let bottom = Map::cube_sky(bottom);
+        // [top, bottom, north, south, east, west]
+        [east, west, north, south, top, bottom]
     }
 
     pub(crate) fn construct_sky_inside(&self) -> [Solid<'a>; 6] {

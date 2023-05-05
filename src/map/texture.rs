@@ -2,6 +2,18 @@ use crate::generation::{LIGHTMAP_SCALE, MAT_SCALE};
 use crate::prelude::*;
 use std::{borrow::Cow, fmt::Display};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Material<'a> {
+    pub material: StrType<'a>,
+    pub light_scale: u8,
+}
+
+impl<'a> Material<'a> {
+    pub fn new<T: Into<StrType<'a>>>(material: T) -> Self {
+        Self { material: material.into(), light_scale: LIGHTMAP_SCALE }
+    }
+}
+
 /// Infomation about a texture on a [`Plane`]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Texture<'a> {
@@ -13,25 +25,23 @@ pub struct Texture<'a> {
 
 impl<'a> Texture<'a> {
     pub const fn new(
-        material: StrType<'a>,
-        uaxis: UVAxis<f32>,
-        vaxis: UVAxis<f32>,
-        light_scale: u8,
+        material: StrType<'a>, uaxis: UVAxis<f32>, vaxis: UVAxis<f32>, light_scale: u8,
     ) -> Self {
         Self { material, uaxis, vaxis, light_scale }
     }
 
     pub const fn cube_textures(mats: [&str; 6]) -> [Texture; 6] {
-        let [top, bottom, west, east, south, north] = mats;
+        // let [top, bottom, west, east, south, north] = mats;
+        let [east, west, north, south, top, bottom] = mats;
 
+        let east = TextureBuilder::new_mat(Cow::Borrowed(east)).east().build();
+        let west = TextureBuilder::new_mat(Cow::Borrowed(west)).west().build();
+        let north = TextureBuilder::new_mat(Cow::Borrowed(north)).north().build();
+        let south = TextureBuilder::new_mat(Cow::Borrowed(south)).south().build();
         let top = TextureBuilder::new_mat(Cow::Borrowed(top)).top().build();
         let bottom = TextureBuilder::new_mat(Cow::Borrowed(bottom)).bottom().build();
-        let left = TextureBuilder::new_mat(Cow::Borrowed(west)).east().build();
-        let right = TextureBuilder::new_mat(Cow::Borrowed(east)).west().build();
-        let back = TextureBuilder::new_mat(Cow::Borrowed(south)).north().build();
-        let front = TextureBuilder::new_mat(Cow::Borrowed(north)).south().build();
 
-        [top, bottom, left, right, back, front]
+        [east, west, north, south, top, bottom]
     }
 }
 
@@ -177,7 +187,7 @@ impl UVAxis<f32> {
     /// `normal` does not need to be normalized.
     /// See: [`Vector3::greatest_axis`]
     pub fn from_norm_align_world(normal: &Vector3<f32>) -> (Self, Self) {
-        let normal_abs = normal.abs();
+        let normal_abs = normal.clone().abs();
         let axis = normal_abs.greatest_axis();
         match axis {
             Axis3::X => Self::default_east(),

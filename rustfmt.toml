@@ -5,6 +5,7 @@ chain_width=80
 use_small_heuristics="Max"
 newline_style="Unix"
 use_field_init_shorthand=true
+# fn_args_layout="Compressed"
 # format_code_in_doc_comments=true # unstable
 # allow array, etc to start on same line if too long when formatting
 # overflow_delimited_expr=true # unstable

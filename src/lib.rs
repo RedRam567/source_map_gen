@@ -25,6 +25,7 @@
 #![warn(clippy::undocumented_unsafe_blocks)]
 #![deny(clippy::semicolon_if_nothing_returned)]
 
+// #[deprecated]
 pub mod generation;
 pub mod light;
 pub mod map;
