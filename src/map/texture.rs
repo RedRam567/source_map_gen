@@ -2,6 +2,8 @@ use crate::generation::{LIGHTMAP_SCALE, MAT_SCALE};
 use crate::prelude::*;
 use std::{borrow::Cow, fmt::Display};
 
+pub const NO_DRAW: Material<'static> = Material::new_const(Cow::Borrowed("tools/toolsnodraw"));
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Material<'a> {
     pub material: StrType<'a>,
@@ -11,6 +13,10 @@ pub struct Material<'a> {
 impl<'a> Material<'a> {
     pub fn new<T: Into<StrType<'a>>>(material: T) -> Self {
         Self { material: material.into(), light_scale: LIGHTMAP_SCALE }
+    }
+
+    pub const fn new_const(material: StrType<'a>) -> Self {
+        Self { material, light_scale: LIGHTMAP_SCALE }
     }
 }
 
@@ -206,7 +212,18 @@ impl UVAxis<f32> {
 
         // get the uaxis by getting vector perpendiuclar to normal
         // and normal mirrored vertically
-        let flip_z = Vector3::new(normal.x, normal.y, -normal.z);
+        let mut flip_z = Vector3::new(normal.x, normal.y, -normal.z);
+        if normal.z.abs() < 1.0 {
+            // HACK: fix for non-axis alligned vertical planes where z is 0
+            // signs disagree with Wolfram Alpha
+            // FIXME: find proper way to get vector perpendicular to normal
+            // towards +-Z axis
+            // wait, cant we just set it to 0 0 +-1?
+            // copysign prob what I want idk
+            // if not correct, will just be mirred left/right
+            // current: seems to be always not flipped relative to face
+            flip_z.z = (flip_z.z + 16.0).copysign(flip_z.z); // arbitrary, maybe need -16
+        }
         let mut uaxis = normal.cross(&flip_z).normalize();
 
         // get vaxis by getting vector perpendicular to uaxis and normal

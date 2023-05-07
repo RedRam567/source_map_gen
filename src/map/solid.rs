@@ -134,9 +134,7 @@ impl Plane {
         Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
     }
 
-    pub fn with_mat_align<'a>(
-        self, material: &Material<'a>, world_align: bool,
-    ) -> Side<'a> {
+    pub fn with_mat_align<'a>(self, material: &Material<'a>, world_align: bool) -> Side<'a> {
         let normal = self.normal_dir();
         let (uaxis, vaxis) = if world_align {
             UVAxis::from_norm_align_world(&normal)
@@ -145,6 +143,26 @@ impl Plane {
         };
         let Material { material, light_scale } = material.clone();
         Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
+    }
+
+    pub fn top(z: f32) -> Self {
+        const VALUE: f32 = 64.0;
+        // from Bounds::top_plane where its Bounds::new(-64,-64,_, 64,64,z)
+        Self::new(
+            Vector3::new(-VALUE, VALUE, z),
+            Vector3::new(VALUE, VALUE, z),
+            Vector3::new(VALUE, -VALUE, z),
+        )
+    }
+
+    pub fn bottom(z: f32) -> Self {
+        const VALUE: f32 = 64.0;
+        // from Bounds::bottom_plane where its Bounds::new(-64,-64,z, 64,64,_)
+        Self::new(
+            Vector3::new(VALUE, VALUE, z),
+            Vector3::new(-VALUE, VALUE, z),
+            Vector3::new(-VALUE, -VALUE, z),
+        )
     }
 }
 

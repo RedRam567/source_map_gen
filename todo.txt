@@ -9,10 +9,25 @@ freaking get color working
 
 shapes
     wedges
-    spikes
-    cylinders
+    spikes, oblique
+    cylinders, oblique?
     arches
     spheres
+    prysms, oblique?
+    truncated prisms? (O_O) just do custom top/bottom plane and trust(tm) the user
+        wait just do clip tool
+    frustum (sphere layer)
+    Toroidal prism (pit)
+    stellation?
+        how tf find center of plane?
+
+complex shapes
+    stars pyrism
+    gears (O_O)
+    wireframe
+    helix (single)
+
+extended high face count shapes
 
 entities
 

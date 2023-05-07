@@ -23,7 +23,12 @@
 #![warn(clippy::missing_const_for_fn)]
 #![warn(clippy::missing_safety_doc)]
 #![warn(clippy::undocumented_unsafe_blocks)]
+#![deny(rustdoc::broken_intra_doc_links)] // impossible to deny normal compile :/
 #![deny(clippy::semicolon_if_nothing_returned)]
+
+use std::iter::Peekable;
+
+use crate::prelude::Vector2;
 
 // #[deprecated]
 pub mod generation;
@@ -42,6 +47,104 @@ pub mod prelude {
 
 /// String type for the library. Might change or be in-lined.
 pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
+
+
+// TODO:DOCS: not tested because dont want public, use make::visibility
+/// An iterator of the current and next value. Last `next()` call returns the last
+/// item and the first item.
+///
+/// # Examples
+///
+/// ```rust,ignore
+#[doc = concat!("use ", std::module_path!(), "::IterWithNext;")]
+///
+/// let mut iter = IterWithNext::new([0].into_iter());
+/// assert_eq!(Some((0, 0)), iter.next());
+/// assert_eq!(None, iter.next());
+///
+/// let mut iter = IterWithNext::new([0, 1].into_iter());
+/// assert_eq!(Some((0, 1)), iter.next());
+/// assert_eq!(Some((1, 0)), iter.next());
+/// assert_eq!(None, iter.next());
+///
+///  let mut iter = IterWithNext::new([0, 1, 2].into_iter());
+/// assert_eq!(Some((0, 1)), iter.next());
+/// assert_eq!(Some((1, 2)), iter.next());
+/// assert_eq!(Some((2, 0)), iter.next());
+/// assert_eq!(None, iter.next());
+/// ```
+pub(crate) struct IterWithNext<I, T>
+where
+    I: ExactSizeIterator<Item = T>,
+{
+    iter: Peekable<I>,
+    first_item: Option<T>,
+}
+
+impl<I, T> IterWithNext<I, T>
+where
+    I: ExactSizeIterator<Item = T>,
+{
+    pub fn new(iter: I) -> Self {
+        Self { iter: iter.peekable(), first_item: None }
+    }
+
+    pub const fn new_peekable(iter: Peekable<I>) -> Self {
+        Self { iter, first_item: None }
+    }
+}
+
+impl<I, T> Iterator for IterWithNext<I, T>
+where
+    I: ExactSizeIterator<Item = T>,
+    T: Clone,
+{
+    type Item = (T, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.iter.next()?; // if none, iteration over
+        if self.first_item.is_none() {
+            // set first item
+            self.first_item = Some(current.clone());
+        }
+
+        // peek else first_item else None
+        let next = match self.iter.peek() {
+            Some(v) => v.clone(),
+            // if none, iter was len 1, return none
+            // TODO: is this ever none?
+            None => match self.first_item.clone() {
+                Some(v) => v,
+                None => {
+                    #[cfg(debug_assertions)]
+                    unreachable!("impossible for first_item to be None");
+                    #[cfg(not(debug_assertions))]
+                    // SAFETY: `first_item` is always set here as if None on
+                    // first iteration, it imediatly returns none
+                    unsafe {
+                        std::hint::unreachable_unchecked()
+                    }
+                },
+            },
+        };
+
+        Some((current, next))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<I, T> ExactSizeIterator for IterWithNext<I, T>
+where
+    I: ExactSizeIterator<Item = T>,
+    T: Clone,
+{
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
 
 // preferred rust group order (pub first in the same group)
 // extern
@@ -105,3 +208,69 @@ pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
 // connector
 // ..
 // 8 mega regions (8 points), connected by connectors and s
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn iter_peek() {
+        let mut iter = IterWithNext::new([0; 0].into_iter());
+        assert_eq!(0, iter.len());
+        assert_eq!(None, iter.next());
+
+        // desired I think, eh yeah
+        let mut iter = IterWithNext::new([0].into_iter());
+        assert_eq!(1, iter.len());
+        assert_eq!(Some((0, 0)), iter.next());
+        assert_eq!(0, iter.len());
+        assert_eq!(None, iter.next());
+
+        let mut iter = IterWithNext::new([0, 1].into_iter());
+        assert_eq!(2, iter.len());
+        assert_eq!(Some((0, 1)), iter.next());
+        assert_eq!(1, iter.len());
+        assert_eq!(Some((1, 0)), iter.next());
+        assert_eq!(0, iter.len());
+        assert_eq!(None, iter.next());
+
+        let mut iter = IterWithNext::new([0, 1, 2].into_iter());
+        assert_eq!(3, iter.len());
+        assert_eq!(Some((0, 1)), iter.next());
+        assert_eq!(2, iter.len());
+        assert_eq!(Some((1, 2)), iter.next());
+        assert_eq!(1, iter.len());
+        assert_eq!(Some((2, 0)), iter.next());
+        assert_eq!(0, iter.len());
+        assert_eq!(None, iter.next());
+
+        let mut iter = IterWithNext::new([0, 1, 2, 3].into_iter());
+        assert_eq!(4, iter.len());
+        assert_eq!(Some((0, 1)), iter.next());
+        assert_eq!(3, iter.len());
+        assert_eq!(Some((1, 2)), iter.next());
+        assert_eq!(2, iter.len());
+        assert_eq!(Some((2, 3)), iter.next());
+        assert_eq!(1, iter.len());
+        assert_eq!(Some((3, 0)), iter.next());
+        assert_eq!(0, iter.len());
+        assert_eq!(None, iter.next());
+
+        let mut iter = IterWithNext::new([0, 1, 2, 3, 4].into_iter());
+        assert_eq!(5, iter.len());
+        assert_eq!(Some((0, 1)), iter.next());
+        assert_eq!(4, iter.len());
+        assert_eq!(Some((1, 2)), iter.next());
+        assert_eq!(3, iter.len());
+        assert_eq!(Some((2, 3)), iter.next());
+        assert_eq!(2, iter.len());
+        assert_eq!(Some((3, 4)), iter.next());
+        assert_eq!(1, iter.len());
+        assert_eq!(Some((4, 0)), iter.next());
+        assert_eq!(0, iter.len());
+        assert_eq!(None, iter.next());
+
+        // panic!("{}", std::module_path!().split_once("::").unwrap().0);
+        // panic!("{}", std::module_path!());
+    }
+}

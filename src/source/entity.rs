@@ -98,7 +98,7 @@ where
 // TODO: generic entity
 
 // TODO:DOCS:
-/// https://developer.valvesoftware.com/wiki/Light_environment
+/// See also: <https://developer.valvesoftware.com/wiki/Light_environment>
 #[derive(Clone, Debug, PartialEq)]
 pub struct LightEnviroment<S> {
     /// Common Fields. Including classname, origin, angles, flags, etc.
@@ -181,7 +181,7 @@ where
 
 // TODO:DOCS: todo include c fields
 // TODO: is angles needed? not on wiki be is in hammer and there is dir/angle input IO
-/// https://developer.valvesoftware.com/wiki/Shadow_control
+/// See also: <https://developer.valvesoftware.com/wiki/Shadow_control>
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShadowControl<S> {
     /// Common Fields. Including classname, origin, angles, flags, etc.
@@ -232,7 +232,7 @@ where
 }
 
 // TODO:DOCS:
-/// https://developer.valvesoftware.com/wiki/Env_fog_controller
+/// See also: <https://developer.valvesoftware.com/wiki/Env_fog_controller>
 #[derive(Clone, Debug, PartialEq)]
 pub struct EnvFogController<S> {
     /// Common Fields. Including classname, origin, angles, flags, etc.

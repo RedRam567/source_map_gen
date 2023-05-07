@@ -190,14 +190,31 @@ impl<T> Vector2<T> {
     }
 }
 
+impl Vector2<f32> {
+    /// The distance between two 2d points.
+    pub fn dist(&self, other: &Self) -> f32 {
+        // sqrt(dx^2 + dy^2)
+        let delta = self.clone() - other;
+        delta.x.hypot(delta.y)
+    }
+}
+
 impl<T: Copy> Vector2<T> {
     /// Constant clone. `Vector2::clone()` isn't const for some reason.
     pub const fn const_clone(&self) -> Self {
         Self { ..*self }
     }
 
-    pub const fn with_z(self, z: T) -> Vector3<T> {
+    pub const fn with_z(&self, z: T) -> Vector3<T> {
         Vector3 { x: self.x, y: self.y, z }
+    }
+}
+
+impl<T: Neg<Output = T>> Neg for Vector2<T> {
+    type Output = Vector2<T>;
+
+    fn neg(self) -> Self::Output {
+        Self { x: -self.x, y: -self.y }
     }
 }
 
