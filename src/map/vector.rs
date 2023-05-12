@@ -3,8 +3,6 @@
 use derive_ops::*;
 use std::{fmt::Display, ops::Neg};
 
-use crate::generation::shape::SolidOptions;
-
 /// One of 3 axes, X, Y, Z.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Axis3 {
@@ -41,8 +39,7 @@ pub struct Vector3<T> {
 }
 
 impl Vector3<f32> {
-    pub fn new_option(options: SolidOptions, mut x: f32, mut y: f32, mut z: f32) -> Self {
-        let allow_frac = options.allow_frac;
+    pub fn new_with_round(mut x: f32, mut y: f32, mut z: f32, allow_frac: bool) -> Self {
         if !allow_frac {
             x = x.round();
             y = y.round();
@@ -159,6 +156,10 @@ impl<T: Copy> Vector3<T> {
     pub const fn into_vector2(self) -> Vector2<T> {
         Vector2 { x: self.x, y: self.y }
     }
+
+    pub const fn into_vector2_and_z(self) -> (Vector2<T>, T) {
+        (Vector2 { x: self.x, y: self.y }, self.z)
+    }
 }
 
 impl<T: Display> Display for Vector3<T> {
@@ -191,6 +192,14 @@ impl<T> Vector2<T> {
 }
 
 impl Vector2<f32> {
+    pub fn new_with_round(mut x: f32, mut y: f32, allow_frac: bool) -> Self {
+        if !allow_frac {
+            x = x.round();
+            y = y.round();
+        }
+        Self::new(x, y)
+    }
+
     /// The distance between two 2d points.
     pub fn dist(&self, other: &Self) -> f32 {
         // sqrt(dx^2 + dy^2)

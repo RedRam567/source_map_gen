@@ -64,7 +64,7 @@ impl GlobalLighting {
 
 impl Default for GlobalLighting {
     // TODO:
-    /// defaults from [`crate::map2::LightEnviroment]
+    /// defaults from [`crate::source::LightEnviroment]
     fn default() -> Self {
         Self {
             sun_color: ColorBrightness::new(255, 255, 255, 200),

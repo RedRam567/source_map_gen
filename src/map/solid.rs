@@ -1,6 +1,6 @@
 //! Solids, brushes, peices of map geometry.
 
-use crate::generation::shape::SolidOptions;
+use crate::generation2::SolidOptions;
 use crate::prelude::*;
 use std::fmt::Display;
 
@@ -46,11 +46,11 @@ impl<'a> Side<'a> {
         Self { plane, texture }
     }
 
-    pub fn new_points(
+    pub fn new_verts(
         bl: Vector3<f32>, tl: Vector3<f32>, tr: Vector3<f32>, material: &Material<'a>,
         options: &SolidOptions,
     ) -> Self {
-        Plane::new_with_round(bl, tl, tr, options.allow_frac)
+        Plane::new(bl, tl, tr)
             .with_mat_align(material, options.world_align)
     }
 

@@ -32,6 +32,7 @@ use crate::prelude::Vector2;
 
 // #[deprecated]
 pub mod generation;
+pub mod generation2;
 pub mod light;
 pub mod map;
 pub mod source;
@@ -48,6 +49,77 @@ pub mod prelude {
 /// String type for the library. Might change or be in-lined.
 pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum OneOrVec<T> {
+    One(T),
+    Vec(Vec<T>),
+}
+
+impl<T> OneOrVec<T> {
+    pub const fn new() -> Self {
+        OneOrVec::Vec(Vec::new())
+    }
+    pub fn with_capacity(cap: usize) -> Self {
+        OneOrVec::Vec(Vec::with_capacity(cap))
+    }
+    pub const fn is_one(&self) -> bool {
+        matches!(*self, Self::One(_))
+    }
+    pub const fn is_vec(&self) -> bool {
+        matches!(*self, Self::Vec(_))
+    }
+    pub fn to_vec(self) -> Vec<T> {
+        match self {
+            OneOrVec::One(item) => vec![item],
+            OneOrVec::Vec(vec) => vec,
+        }
+    }
+    pub fn to_vec_reserve(self, additional: usize) -> Vec<T> {
+        match self {
+            OneOrVec::One(item) => {
+                let mut vec = Vec::with_capacity(additional + 1);
+                vec.push(item);
+                vec
+            }
+            OneOrVec::Vec(mut vec) => {
+                vec.reserve(additional);
+                vec
+            }
+        }
+    }
+    pub fn len(&self) -> usize {
+        match self {
+            OneOrVec::One(_) => 1,
+            OneOrVec::Vec(vec) => vec.len(),
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+impl<T: Clone> OneOrVec<T> {
+    pub fn push_or_extend(&mut self, other: Self) {
+        // get around cant mutate self or use of moved self errors (wtf)
+        let mut myself = self;
+
+        match (&mut myself, other) {
+            (OneOrVec::One(this), OneOrVec::One(other)) => {
+                *myself = OneOrVec::Vec(vec![this.clone(), other]);
+            }
+            (OneOrVec::One(this), OneOrVec::Vec(mut other)) => {
+                other.insert(0, this.clone());
+                *myself = OneOrVec::Vec(other);
+            }
+            (OneOrVec::Vec(this), OneOrVec::One(other)) => {
+                this.push(other);
+            }
+            (OneOrVec::Vec(this), OneOrVec::Vec(other)) => {
+                this.extend(other);
+            }
+        }
+    }
+}
 
 // TODO:DOCS: not tested because dont want public, use make::visibility
 /// An iterator of the current and next value. Last `next()` call returns the last
@@ -124,7 +196,7 @@ where
                     unsafe {
                         std::hint::unreachable_unchecked()
                     }
-                },
+                }
             },
         };
 

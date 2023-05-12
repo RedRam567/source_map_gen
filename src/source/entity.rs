@@ -41,7 +41,7 @@ where
 pub struct PointEntity<S> {
     /// Name `(targetname)` The name that other entities use to refer to this entity.
     pub name: S,
-    /// Parent `(parentname)` Maintain the same initial offset to this entity. An attachment point can also be used if separated by a comma at the end. (parentname [targetname],[attachment])
+    /// Parent `(parentname)` Maintain the same initial offset to this entity. An attachment point can also be used if separated by a comma at the end. (parentname \[targetname\],\[attachment\])
     /// Tip: Entities transition to the next map with their parents
     /// Tip: phys_constraint can be used as a workaround if parenting fails.
     ///

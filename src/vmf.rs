@@ -1,5 +1,5 @@
 //! Vmf format traits and impls.
-//! See [`vmfparser`] crate.
+//! See [`vmf_parser_nom`] crate.
 
 use vmf_parser_nom::ast::{Block, Property, Vmf};
 

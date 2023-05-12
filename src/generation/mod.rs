@@ -1,7 +1,6 @@
 //! Module handles generating a map
 
 pub mod region;
-pub mod shape;
 
 use region::*;
 
