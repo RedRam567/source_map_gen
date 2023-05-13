@@ -1,5 +1,8 @@
 #![allow(clippy::print_literal)] // false positive for file!()
 
+use core::panic;
+use std::{todo, dbg};
+
 use super::*;
 use crate::prelude::{Material, Plane, Side, Solid, Vector2};
 use crate::{IterWithNext, OneOrVec};
@@ -95,6 +98,33 @@ pub fn ellipse_verts(
     })
 }
 
+// TODO: twisted circles and expand to bounds (circle with flat faces on aabb)
+pub fn ellipse_verts_3d(
+    center: Vector3<f32>, x_radius: f32, y_radius: f32, mut num_sides: u32, options: &SolidOptions,
+) -> impl ExactSizeIterator<Item = Vector3<f32>> + Clone {
+    // clamp for too small for sides and sides < 3
+    let changed = clamp_promote((x_radius).min(y_radius), &mut num_sides, options);
+    if changed {
+        eprintln!("[{}:{}] Warning Ellipse: Sides clamped to {}. Colinear ellipse points, too small/too many sides. Ellipse(x:{:.1},y:{:.1})",
+                file!(), line!(), num_sides, x_radius, y_radius);
+    }
+
+    // relative to north, right/clockwise(east)
+    // RangeInclusive<u32> doesnt impl ExactSizeIterator BUT Range<u32> does
+    // BUT neither range impl for 64/128 ints WTF???
+    // https://doc.rust-lang.org/std/iter/trait.ExactSizeIterator.html#implementors
+    let allow_frac = options.allow_frac;
+    let delta_angle = std::f64::consts::TAU / num_sides as f64;
+    (0..num_sides).map(move |n| {
+        let angle = delta_angle * (n + 1) as f64;
+        let x = x_radius as f64 * -angle.cos() + center.x as f64;
+        let y = y_radius as f64 * angle.sin() + center.y as f64;
+        let z = center.z;
+        // Vector2::new(x as f32, y as f32)
+        Vector3::new_with_round(x as f32, y as f32, z, allow_frac)
+    })
+}
+
 // let top = Plane::new(verts[4].const_clone(), verts[5].const_clone(), verts[6].const_clone()).with_texture(textures[0]);
 // let bottom = Plane::new(verts[2].const_clone(), verts[1].const_clone(), verts[0].const_clone()).with_texture(textures[1]);
 // let north = Plane::new(verts[2].const_clone(), verts[6].const_clone(), verts[5].const_clone()).with_texture(textures[2]);
@@ -115,6 +145,187 @@ pub enum Grouping {
     Group,
     // /// Every face as seperate [`Solid`]
     // Face,
+}
+
+// include top
+// include bottom
+// is upside down cone -> auto? i mean how often we be adding non-cubes?
+// A cylinder, frustum (truncated cone), cone or prism
+// A
+// NOTE: hammer cylinder order: bottom, top counter clock, sides in some order
+/// A prism, cylinder, cone, frustum (truncated cone). Can be oblique (slanted)
+/// and/or truncated (angled bases). Returns an iter of `Sides` in the order:
+/// top base (if available), bottom base (if available), sides.
+///
+/// `top` and `bottom` are iters to points a polygon on a arbitrary plane which
+/// are connected with faces.
+/// `top` or `bottom` can also be a single point, at which it
+/// will be interpreted as a cone and omit the apporpriate side.
+/// `prefer_top` only matters for "weird" prisms, set to false if you dont know.
+/// It controls wether the top or bottom base has two points associated with it
+/// rather than one giving extra accuracy to vbsp/Hammer.
+/// `prefer_top` is ignored by cones.
+/// `mats` is an array of materals for the sides in the order:
+/// top base, bottom base, sides.
+///
+/// # Panics
+/// - `top` or `bottom` must least 3 length.
+/// - `top` and `bottom` must not both be single points as that would be degenerate
+///     and have no volume.
+///
+/// # Notes
+/// - FIXME: When making ellipses bases or other weird stuff, unpreferred side will
+///     seemingly be rotated clockwise by a bit for some reason. Maybe just
+///     vbsp/Hammer's fault but maybe something wrong in this library.
+/// - FIXME: BROKEN HANGS. If `top` and `bottom` are different lengths, it will advance both to the
+///     shortest length (uses .zip())
+/// - `top` and `bottom` must give their points in clockwise direction (ex: East from North).
+/// - The first 3 points of `top` and `bottom` are used to make the base planes.
+///     so non-planar bases will be truncated to planar.
+/// - If `top` and `bottom` are both iters to single points. No special behavior
+///     and it is treated as an upside down cone and will result in an invalid `Solid`
+/// - Clamshells are possible, where the preferred base is a polygon and
+///     unpreferred base is a line, but the unpreferred base side must be removed.
+///     (with `.skip(1)` for example to skip the top base)
+/// - Double clamshells seem to be impossible and almost-double clamshells
+///     are extemely finicky and don't match porportions.
+///
+/// # Examples
+/// ```rust
+/// use proc_gen2::prelude::*;
+/// use proc_gen2::map::Map;
+/// use proc_gen2::generation2::shape::ellipse_verts_3d;
+/// use proc_gen2::vmf::ToLower;
+/// use proc_gen2::generation2::SolidOptions;
+/// use proc_gen2::generation2::shape::prism;
+///
+/// let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
+/// let mats = &[&dev_person; 3];
+/// let options = &SolidOptions::default().allow_frac();
+/// let mut map = Map::default();
+///
+/// // a perfect 512x512x512 cylinder
+/// let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 256.0), 256.0, 256.0, 32, options);
+/// let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 32, options);
+/// let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+/// map.add_solid(solid);
+///
+/// // a 512x512x512 frustum
+/// let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 256.0), 128.0, 128.0, 32, options);
+/// let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 32, options);
+/// let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+/// map.add_solid(solid);
+///
+/// // a 512x512x512 cone
+/// let top = std::iter::repeat(Vector3::new(0.0, 0.0, 256.0)).take(16);
+/// let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 16, options);
+/// let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+/// map.add_solid(solid);
+///
+/// // a 512x512x512 upside down cone
+/// let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 256.0), 256.0, 256.0, 16, options);
+/// let bottom = std::iter::repeat(Vector3::new(0.0, 0.0, -256.0)).take(16);
+/// let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+/// map.add_solid(solid);
+///
+/// // a weird shape
+/// // try changing the false to true and see the top become a perfect circle
+/// // while the bottom gets weird
+/// let top = ellipse_verts_3d(Vector3::new(512.0, 512.0, 512.0), 256.0, 256.0, 32, options);
+/// let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
+/// let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+/// map.add_solid(solid);
+///
+/// let vmf = map.to_lower();
+/// println!("{}", vmf); // replace with writeln!() to a file
+/// ```
+///
+/// ```rust ignore,no_run
+/// // almost-double clamshell
+/// let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
+/// let mats = &[&dev_person; 3];
+/// let options = &SolidOptions::default().allow_frac();
+/// let mut map = Map::default();
+/// // has 5120 x_radius but is only 1694 in hammer
+/// let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 512.0), 5120.0, 0.0, 32, options);
+/// // when 128 is smaller, shape bigger I think, and crashes vbsp and/or l4d2 doesnt load
+/// // (Host_EndGame: Map coordinate extents are too large!!)
+/// let bottom =
+///     ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 128.0, 512.0, 32, options);
+/// // NOTE: skip(0) or skip(1) seems to have no effect
+/// let solid = Solid::new(prism(top, bottom, false, mats, options).skip(1).collect::<Vec<_>>());
+/// map.add_solid(solid);
+/// let vmf = map.to_lower();
+/// // write!() to .vmf file here
+/// ```
+// TODO: rotate, split, stars, transform, sphere
+pub fn prism<'a, I1, I2>(
+    top: I1, bottom: I2, prefer_top: bool, mats: &'a [&'a Material<'a>; 3],
+    options: &'a SolidOptions,
+) -> impl Iterator<Item = Side<'a>> + Clone + 'a
+where
+    I1: Iterator<Item = Vector3<f32>> + Clone + 'a,
+    I2: Iterator<Item = Vector3<f32>> + Clone + 'a,
+{
+    #[inline(always)] // eh
+    fn iter_to_three<I, T>(mut iter: I) -> Option<[T; 3]>
+    where
+        I: Iterator<Item = T>,
+    {
+        Some([iter.next()?, iter.next()?, iter.next()?])
+    }
+
+    // Figure out if cone and choose different points to allow cones
+    // TODO: check only 2 for performance, (maybe bad rounding tho)
+    // OR distance check and collapse into 1 point (how choose?)
+    // cant we just use base sides in next step then?
+    // TODO: hmm, check for identical x,y, OR z for all?, to allow circle to line
+
+    let is_top_one_point = {
+        let mut top_clone = top.clone();
+        let top_first = top_clone.next().expect("Must be at least 3 len");
+        top_clone.all(|item| item == top_first)
+    };
+    let is_bottom_one_point = {
+        let mut bottom_clone = bottom.clone();
+        let bottom_first = bottom_clone.next().expect("Must be at least 3 len");
+        bottom_clone.all(|item| item == bottom_first)
+    };
+    assert!(!(is_top_one_point && is_bottom_one_point), "Degenerate. Prism is a line");
+
+    // Add top and bottom planes only if not a point
+    // hammer just takes 3 adjacent points and does weird offset by 1 for bottom tho
+    let top_side = (!is_top_one_point).then(|| {
+        let [pt1, pt2, pt3] = iter_to_three(top.clone()).expect("Must be at least 3 len");
+        Side::new_verts(pt1, pt2, pt3, mats[0], options)
+    });
+    let bottom_side = (!is_bottom_one_point).then(|| {
+        let [pt1, pt2, pt3] = iter_to_three(bottom.clone()).expect("Must be at least 3 len");
+        // NOTE: reversed order
+        Side::new_verts(pt3, pt2, pt1, mats[1], options)
+    });
+    let top_bottom = top_side.into_iter().chain(bottom_side.into_iter());
+
+    // Add sides
+    let points4 = IterWithNext::new(top).zip(IterWithNext::new(bottom));
+    let sides = points4.map(move |((top1, top2), (bottom1, bottom2))| {
+        dbg!();
+        // TODO: simplify. is_top/bottom should determine normal vs upside down
+        // else prefer_top if both false (both will never be true because of assert)
+        // is_bottom_one_point || prefer_top -> prefer top
+        // is_top_one_point && prefer_top -> prefer bottom no matter what
+        if (is_bottom_one_point || prefer_top) && !(is_top_one_point && prefer_top) {
+            // upside down cone, prefer top, 2 points on top
+            // NOTE: reversed order (not sure why, I thought was working fine but
+            // its not ig)
+            Side::new_verts(top2, top1, bottom1, mats[2], options)
+        } else {
+            // normal, upright cone, prefer bottom, 2 points on bottom
+            Side::new_verts(bottom1, bottom2, top1, mats[2], options)
+        }
+    });
+
+    top_bottom.chain(sides)
 }
 
 // TODO: sphere, arch, multi
@@ -245,7 +456,7 @@ pub fn cylinder<'a>(
 
 /// Top, Bottom, sides
 /// A [`cylinder`] with different sized (and offset) bases. Bases must have the same number of sides
-pub fn frustum<'a, I>(
+pub fn frustum_old<'a, I>(
     top: I, top_z: f32, bottom: I, bottom_z: f32, mats: &[&Material<'a>; 3], options: &SolidOptions,
 ) -> OneOrVec<Solid<'a>>
 where
@@ -260,11 +471,11 @@ where
     sides.push(Plane::bottom(bottom_z).with_mat_align(mats[1], options.world_align));
 
     let bottom_verts = IterWithNext::new(bottom);
-    for ((current, next), top) in bottom_verts.zip(top) {
+    for ((bottom1, bottom2), top1) in bottom_verts.zip(top) {
         sides.push(Side::new_verts(
-            current.with_z(bottom_z),
-            next.with_z(bottom_z),
-            top.with_z(top_z),
+            bottom1.with_z(bottom_z),
+            bottom2.with_z(bottom_z),
+            top1.with_z(top_z),
             mats[2],
             options,
         ));
@@ -340,8 +551,14 @@ pub fn sphere<'a>(
             ellipse_verts(center_xy.clone(), bottom_radius_x, bottom_radius_y, num_sides, options);
 
         // make frustum layer NOTE: height absolute
-        let frustum =
-            frustum(top_circle, height_top, bottom_circle, height_bottom, frustum_mats, options);
+        let frustum = frustum_old(
+            top_circle,
+            height_top,
+            bottom_circle,
+            height_bottom,
+            frustum_mats,
+            options,
+        );
         solids.push_or_extend(frustum);
     }
     solids
@@ -368,72 +585,73 @@ fn radius_at_sphere_height_xy(
 
 #[cfg(test)]
 mod tests {
-    /// Array that can be slice into a smaller sub-array
-    ///
-    /// Also see the [crate] level reference.
-    pub trait SubArray {
-        /// The value type of this array.
-        ///
-        /// This is the `T` in `[T; N]` on regular arrays.
-        type Item;
+    // /// Array that can be slice into a smaller sub-array
+    // ///
+    // /// Also see the [crate] level reference.
+    // pub trait SubArray {
+    //     /// The value type of this array.
+    //     ///
+    //     /// This is the `T` in `[T; N]` on regular arrays.
+    //     type Item;
 
-        /// Get a reference to a sub-array of length `N` starting at `offset`.
-        ///
-        /// # Panics
-        /// Panics if `offset + N` exceeds the length of this array.
-        ///
-        /// # Example
-        /// ```
-        /// use sub_array::SubArray;
-        ///
-        /// let arr: [u8; 5] = [9, 8, 7, 6, 5];
-        ///
-        /// // Get a sub-array starting at offset 3
-        /// let sub: &[u8; 2] = arr.sub_array_ref(3);
-        /// assert_eq!(sub, &[6, 5]);
-        /// ```
-        fn sub_array_ref<const N: usize>(&self, offset: usize) -> &[Self::Item; N];
+    //     /// Get a reference to a sub-array of length `N` starting at `offset`.
+    //     ///
+    //     /// # Panics
+    //     /// Panics if `offset + N` exceeds the length of this array.
+    //     ///
+    //     /// # Example
+    //     /// ```
+    //     /// use sub_array::SubArray;
+    //     ///
+    //     /// let arr: [u8; 5] = [9, 8, 7, 6, 5];
+    //     ///
+    //     /// // Get a sub-array starting at offset 3
+    //     /// let sub: &[u8; 2] = arr.sub_array_ref(3);
+    //     /// assert_eq!(sub, &[6, 5]);
+    //     /// ```
+    //     fn sub_array_ref<const N: usize>(&self, offset: usize) -> &[Self::Item; N];
 
-        /// Get a mutable reference to a sub-array of length `N` starting at
-        /// `offset`.
-        ///
-        /// # Panics
-        /// Panics if `offset + N` exceeds the length of this array.
-        ///
-        /// # Example
-        /// ```
-        /// use sub_array::SubArray;
-        ///
-        /// let mut arr: [u8; 5] = [9, 8, 7, 6, 5];
-        ///
-        /// // Get a mutable sub-array starting at offset 0
-        /// let sub: &mut [u8; 2] = arr.sub_array_mut(0);
-        /// assert_eq!(sub, &mut [9, 8]);
-        /// ```
-        fn sub_array_mut<const N: usize>(&mut self, offset: usize) -> &mut [Self::Item; N];
-    }
+    //     /// Get a mutable reference to a sub-array of length `N` starting at
+    //     /// `offset`.
+    //     ///
+    //     /// # Panics
+    //     /// Panics if `offset + N` exceeds the length of this array.
+    //     ///
+    //     /// # Example
+    //     /// ```
+    //     /// use sub_array::SubArray;
+    //     ///
+    //     /// let mut arr: [u8; 5] = [9, 8, 7, 6, 5];
+    //     ///
+    //     /// // Get a mutable sub-array starting at offset 0
+    //     /// let sub: &mut [u8; 2] = arr.sub_array_mut(0);
+    //     /// assert_eq!(sub, &mut [9, 8]);
+    //     /// ```
+    //     fn sub_array_mut<const N: usize>(&mut self, offset: usize) -> &mut [Self::Item; N];
+    // }
 
-    /// Implementation on regular arrays
-    impl<T, const M: usize> SubArray for [T; M] {
-        type Item = T;
+    // /// Implementation on regular arrays
+    // impl<T, const M: usize> SubArray for [T; M] {
+    //     type Item = T;
 
-        fn sub_array_ref<const N: usize>(&self, offset: usize) -> &[Self::Item; N] {
-            self[offset..(offset + N)].try_into().unwrap()
-        }
+    //     fn sub_array_ref<const N: usize>(&self, offset: usize) -> &[Self::Item; N] {
+    //         self[offset..(offset + N)].try_into().unwrap()
+    //     }
 
-        fn sub_array_mut<const N: usize>(&mut self, offset: usize) -> &mut [Self::Item; N] {
-            (&mut self[offset..(offset + N)]).try_into().unwrap()
-        }
-    }
+    //     fn sub_array_mut<const N: usize>(&mut self, offset: usize) -> &mut [Self::Item; N] {
+    //         (&mut self[offset..(offset + N)]).try_into().unwrap()
+    //     }
+    // }
 
-    use vmf_parser_nom::ast::Vmf;
+    use vmf_parser_nom::ast::{Vmf, Property};
 
     use crate::map::Map;
     use crate::prelude::Vector3;
     use crate::vmf::ToLower;
     use crate::StrType;
 
-    use super::*;
+    use self::panic;
+    use super::*; // why tf is this nessessary?
 
     fn make_shape<'a>(
         shape: &str, bounds: &Bounds, sides: u32, mats: &[&Material<'a>; 6], options: &SolidOptions,
@@ -451,6 +669,98 @@ mod tests {
             str => panic!("unkown shape {}", str),
             // _ => OneOrVec::new()
         }
+    }
+
+    #[test]
+    #[ignore]
+    fn test_frustum_cone() {
+        let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
+        let mats = &[&dev_person; 3];
+        let options = &SolidOptions::default().allow_frac();
+        let mut map = Map::default();
+
+        let top = ellipse_verts_3d(Vector3::new(512.0, 512.0, 512.0), 256.0, 256.0, 32, options);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
+        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
+        let bottom =
+            ellipse_verts_3d(Vector3::new(512.0, 512.0, -512.0), 256.0, 256.0, 32, options);
+        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 512.0), 1024.0, 0.0, 32, options);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 256.0, 256.0, 32, options);
+        let solid =
+            Solid::new(prism(top, bottom, false, mats, options).skip(1).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        let mut map = Map::default();
+        let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 512.0), 5120.0, 0.0, 32, options);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 128.0, 512.0, 32, options);
+        let solid =
+            Solid::new(prism(top, bottom, false, mats, options).skip(1).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        write_test_vmf(map.to_lower());
+        panic!("worked")
+    }
+
+    #[test]
+    #[ignore]
+    fn frustum_cone_doc_test() {
+        let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
+        let mats = &[&dev_person; 3];
+        let options = &SolidOptions::default();
+        let mut map = Map::default();
+        map.options.cordon = Some(crate::generation::Bounds::new(Vector3::new(-5120.0, -5120.0, -5120.0), Vector3::new(5120.0, 5120.0, 5120.0)));
+        // prevent FindPortalSide errors O_o
+        map.defaults_l4d2();
+        map.entities[0].props[0].value = "0 0 2048".into();
+        dbg!(&map.entities[0].props[0]);
+
+        // a perfect 512x512x512 cylinder
+        let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 256.0), 256.0, 256.0, 32, options);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 32, options);
+        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        // a 512x512x512 frustum
+        let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 256.0), 128.0, 128.0, 32, options);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 32, options);
+        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        // a 512x512x512 cone
+        let top = std::iter::repeat(Vector3::new(0.0, 0.0, 256.0)).take(16);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 16, options);
+        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        // a 512x512x512 upside down cone
+        let top = ellipse_verts_3d(Vector3::new(0.0, 0.0, 256.0), 256.0, 256.0, 16, options);
+        let bottom = std::iter::repeat(Vector3::new(0.0, 0.0, -256.0));
+        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        // a weird shape
+        // causes vbsp warnings if not enclosed and no enitities (others dont tho)
+        let top = ellipse_verts_3d(Vector3::new(512.0, 512.0, 512.0), 256.0, 256.0, 32, options);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
+        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        // a weird shape with the bottom preferred NO WARNINGS? O_O?
+        let top = ellipse_verts_3d(Vector3::new(512.0, 512.0, 512.0), 256.0, 256.0, 32, options);
+        let bottom = ellipse_verts_3d(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
+        let solid = Solid::new(prism(top, bottom, true, mats, options).collect::<Vec<_>>());
+        map.add_solid(solid);
+
+        let vmf = map.to_lower();
+
+        write_test_vmf(map.to_lower());
+        panic!("worked")
     }
 
     #[test]

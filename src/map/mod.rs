@@ -11,7 +11,8 @@ pub use texture::*;
 pub use vector::*;
 
 use crate::OneOrVec;
-use crate::{generation::Bounds, StrType};
+use crate::{StrType};
+use crate::generation::Bounds;
 use vmf_parser_nom::ast::Property;
 
 

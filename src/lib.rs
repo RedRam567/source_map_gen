@@ -28,8 +28,6 @@
 
 use std::iter::Peekable;
 
-use crate::prelude::Vector2;
-
 // #[deprecated]
 pub mod generation;
 pub mod generation2;
@@ -145,9 +143,10 @@ impl<T: Clone> OneOrVec<T> {
 /// assert_eq!(Some((2, 0)), iter.next());
 /// assert_eq!(None, iter.next());
 /// ```
+#[derive(Clone, Debug)]
 pub(crate) struct IterWithNext<I, T>
 where
-    I: ExactSizeIterator<Item = T>,
+    I: Iterator<Item = T>,
 {
     iter: Peekable<I>,
     first_item: Option<T>,
@@ -155,7 +154,7 @@ where
 
 impl<I, T> IterWithNext<I, T>
 where
-    I: ExactSizeIterator<Item = T>,
+    I: Iterator<Item = T>,
 {
     pub fn new(iter: I) -> Self {
         Self { iter: iter.peekable(), first_item: None }
@@ -168,7 +167,7 @@ where
 
 impl<I, T> Iterator for IterWithNext<I, T>
 where
-    I: ExactSizeIterator<Item = T>,
+    I: Iterator<Item = T>,
     T: Clone,
 {
     type Item = (T, T);
@@ -188,13 +187,12 @@ where
             None => match self.first_item.clone() {
                 Some(v) => v,
                 None => {
-                    #[cfg(debug_assertions)]
-                    unreachable!("impossible for first_item to be None");
-                    #[cfg(not(debug_assertions))]
-                    // SAFETY: `first_item` is always set here as if None on
-                    // first iteration, it imediatly returns none
-                    unsafe {
-                        std::hint::unreachable_unchecked()
+                    if cfg!(debug_assertions) {
+                        unreachable!("impossible for first_item to be None");
+                    } else {
+                        // SAFETY: `first_item` is always set here as if None on
+                        // first iteration, it imediatly returns none
+                        unsafe { std::hint::unreachable_unchecked() }
                     }
                 }
             },
