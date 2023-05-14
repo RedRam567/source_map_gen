@@ -133,6 +133,20 @@ impl Bounds {
         Vector3::new(x, y, z)
     }
 
+    pub fn top_center(&self) -> Vector3<f32> {
+        let x = (self.min.x + self.max.x) / 2.0;
+        let y = (self.min.y + self.max.y) / 2.0;
+        let z = self.max.x;
+        Vector3::new(x, y, z)
+    }
+
+    pub fn bottom_center(&self) -> Vector3<f32> {
+        let x = (self.min.x + self.max.x) / 2.0;
+        let y = (self.min.y + self.max.y) / 2.0;
+        let z = self.min.x;
+        Vector3::new(x, y, z)
+    }
+
     pub fn x_len(&self) -> f32 {
         (self.min.x - self.max.x).abs()
     }

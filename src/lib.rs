@@ -148,8 +148,8 @@ pub(crate) struct IterWithNext<I, T>
 where
     I: Iterator<Item = T>,
 {
-    iter: Peekable<I>,
-    first_item: Option<T>,
+    pub iter: Peekable<I>,
+    pub first_item: Option<T>,
 }
 
 impl<I, T> IterWithNext<I, T>
@@ -158,10 +158,6 @@ where
 {
     pub fn new(iter: I) -> Self {
         Self { iter: iter.peekable(), first_item: None }
-    }
-
-    pub const fn new_peekable(iter: Peekable<I>) -> Self {
-        Self { iter, first_item: None }
     }
 }
 
