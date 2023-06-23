@@ -13,9 +13,9 @@ pallet = ["dep:rayon", "dep:walkdir"]
 default = ["pallet"]
 
 [dependencies]
-derive_ops = { path = "../derive_ops" }
-vmf_parser_nom = { path = "../vmf_parser_nom" }
-# vmf_parser_nom = "0.1"
+derive_ops = { version = "0.1.0", path = "../derive_ops" }
+vmf_parser_nom = "0.1"
+# vmf_parser_nom = { path = "../vmf_parser_nom" }
 
 indextree = "4.5" # TODO: remove/replace
 rand_chacha = "0.3"
