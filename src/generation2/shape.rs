@@ -1,51 +1,15 @@
 #![allow(clippy::print_literal)] // false positive for file!()
 
+mod old;
+
 use super::*;
+use crate::generation2::disp::Displacement;
 use crate::prelude::{Material, Side, Solid, Vector2};
-use crate::{IterWithNext, OneOrVec};
+use crate::utils::Vec2d;
+use crate::utils::{IterWithNext, OneOrVec};
 
-// cube      6 textures, aligned, bounds
-// wedges    5 textures, aligned, bounds, rotation
-// spikes    2 textures, aligned, bounds, num, rotation2
-// cylinders 3 textures, aligned, bounds, num, rotation2
-// rounded wedges? 5 textures, aligned, bounds, num, rotation2
-// arches    6 textures, aligned, bounds, num, angle, z
-// spheres   1 textures, aligned, bounds, numxy, numz, rotation2
+// TODO: solid transform
 
-// cube     top bottom north sound east west
-// wedge    top, bottom, north, sound, east
-// cone     bottom, side
-// cylinder top, bottom, side
-// slice?   top, bottom, south, east, nw side
-// sphere   side
-// arch     .
-
-// yeah top looks better -> eh top
-
-// cube
-// wedge    east north sound top bottom
-// cone     side bottom
-// cylinder side top bottom
-// slice?   side south east top bottom
-// sphere   side
-// arch
-
-// solid transform
-// hmm all, bounds, stretch sphere hmm
-
-// generate vertexes, make planes, wrap in solid
-// TRY TO ALLIGN TEXTURES
-// world/face allign, abs/relative
-// point/face on axes circles
-
-// make struct ur just methods strait to solids?
-// uh lets not go down oop hell and just do solids
-
-// fn should_promote_frac(radius: f32, sides: u32) -> bool {
-//     radius as u32 / 2 > sides
-// }
-
-// TODO: test non power of 2
 /// returns true if it clamped the sides for the size of the circle.
 /// also clamps for sides < 3
 #[inline]
@@ -121,13 +85,6 @@ pub fn ellipse_verts(
         Vector3::new_with_round(x as f32, y as f32, z, allow_frac)
     })
 }
-
-// let top = Plane::new(verts[4].const_clone(), verts[5].const_clone(), verts[6].const_clone()).with_texture(textures[0]);
-// let bottom = Plane::new(verts[2].const_clone(), verts[1].const_clone(), verts[0].const_clone()).with_texture(textures[1]);
-// let north = Plane::new(verts[2].const_clone(), verts[6].const_clone(), verts[5].const_clone()).with_texture(textures[2]);
-// let south = Plane::new(verts[0].const_clone(), verts[4].const_clone(), verts[7].const_clone()).with_texture(textures[3]);
-// let east = Plane::new(verts[3].const_clone(), verts[7].const_clone(), verts[6].const_clone()).with_texture(textures[5]);
-// let west = Plane::new(verts[1].const_clone(), verts[5].const_clone(), verts[4].const_clone()).with_texture(textures[4]);
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// How to split a shape into one or more solids.
@@ -313,13 +270,6 @@ where
 pub fn cube<'a>(bounds: &Bounds, materials: &[&Material<'a>; 6], options: &SolidOptions) -> Solid<'a> {
     let verts = bounds.verts();
 
-    // let top = Side::new_parts_option(verts[SWT].clone(), verts[NWT].clone(), verts[NET].clone(), materials[0], options);
-    // let top = Plane::new(verts[SWT].const_clone(), verts[NWT].const_clone(), verts[NET].const_clone()).with_material_alignment(materials[0], align);
-    // let bottom = Plane::new(verts[NEB].const_clone(), verts[NWB].const_clone(), verts[SWB].const_clone()).with_material_alignment(materials[1], align);
-    // let north = Plane::new(verts[NEB].const_clone(), verts[NET].const_clone(), verts[NWT].const_clone()).with_material_alignment(materials[2], align);
-    // let south = Plane::new(verts[SWB].const_clone(), verts[SWT].const_clone(), verts[SET].const_clone()).with_material_alignment(materials[3], align);
-    // let east = Plane::new(verts[SEB].const_clone(), verts[SET].const_clone(), verts[NET].const_clone()).with_material_alignment(materials[4], align);
-    // let west = Plane::new(verts[NWB].const_clone(), verts[NWT].const_clone(), verts[SWT].const_clone()).with_material_alignment(materials[5], align);
     let top = Side::new_verts(verts[SWT].clone(), verts[NWT].clone(), verts[NET].clone(), materials[0], options);
     let bottom = Side::new_verts(verts[NEB].clone(), verts[NWB].clone(), verts[SWB].clone(), materials[1], options);
     let north = Side::new_verts(verts[NEB].clone(), verts[NET].clone(), verts[NWT].clone(), materials[2], options);
@@ -337,11 +287,6 @@ pub fn wedge<'a>(bounds: &Bounds, materials: &[&Material<'a>; 5], options: &Soli
     let verts = bounds.verts();
 
     // same as top but with first two verts on bottom
-    // let slope = Plane::new(verts[SWB].const_clone(), verts[NWB].const_clone(), verts[NET].const_clone()).with_material_alignment(materials[0], align);
-    // let bottom = Plane::new(verts[NEB].const_clone(), verts[NWB].const_clone(), verts[SWB].const_clone()).with_material_alignment(materials[1], align);
-    // let north = Plane::new(verts[NEB].const_clone(), verts[NET].const_clone(), verts[NWT].const_clone()).with_material_alignment(materials[2], align);
-    // let south = Plane::new(verts[SWB].const_clone(), verts[SWT].const_clone(), verts[SET].const_clone()).with_material_alignment(materials[3], align);
-    // let east = Plane::new(verts[SEB].const_clone(), verts[SET].const_clone(), verts[NET].const_clone()).with_material_alignment(materials[4], align);
     let slope = Side::new_verts(verts[SWB].clone(), verts[NWB].clone(), verts[NET].clone(), materials[0], options);
     let bottom = Side::new_verts(verts[NEB].clone(), verts[NWB].clone(), verts[SWB].clone(), materials[1], options);
     let north = Side::new_verts(verts[NEB].clone(), verts[NET].clone(), verts[NWT].clone(), materials[2], options);
@@ -374,8 +319,7 @@ pub fn spike<'a>(
     let x_radius = bounds.x_len() / 2.0;
     let y_radius = bounds.y_len() / 2.0;
     let top_points = std::iter::repeat(bounds.top_center());
-    let bottom_points =
-        ellipse_verts(bounds.bottom_center(), x_radius, y_radius, sides, options);
+    let bottom_points = ellipse_verts(bounds.bottom_center(), x_radius, y_radius, sides, options);
 
     // NOTE: this is why `mats` is owned array of refs in `prism()`
     // lifetime problems with reference to this new array
@@ -395,8 +339,7 @@ pub fn cylinder<'a>(
     let x_radius = bounds.x_len() / 2.0;
     let y_radius = bounds.y_len() / 2.0;
     let top_points = ellipse_verts(bounds.top_center(), x_radius, y_radius, sides, options);
-    let bottom_points =
-        ellipse_verts(bounds.bottom_center(), x_radius, y_radius, sides, options);
+    let bottom_points = ellipse_verts(bounds.bottom_center(), x_radius, y_radius, sides, options);
 
     // NOTE: prefer_top shouldn't matter as its all nice
     OneOrVec::One(Solid::new(prism(top_points, bottom_points, false, mats, options).collect()))
@@ -438,10 +381,6 @@ pub fn sphere<'a>(
     });
 
     // TODO: impl DoubleEndedIterator for IterWithNext
-    // or zip or bool to remove allocation
-    // let mut height_iter = IterWithNext::new(iter);
-    //     height_iter.iter.next_back();
-
     // Iter from up to down of top AND bottom circle heights
     let heights = height_at_angles.collect::<Vec<_>>();
     let heights = heights.windows(2);
@@ -463,8 +402,7 @@ pub fn sphere<'a>(
         let top_center = Vector3 { z: height_top_from_center, ..center };
         let bottom_center = Vector3 { z: height_bottom_from_center, ..center };
 
-        let top_circle: _ =
-            ellipse_verts(top_center, top_radius_x, top_radius_y, sides, options);
+        let top_circle: _ = ellipse_verts(top_center, top_radius_x, top_radius_y, sides, options);
         let bottom_circle: _ =
             ellipse_verts(bottom_center, bottom_radius_x, bottom_radius_y, sides, options);
 
@@ -474,8 +412,6 @@ pub fn sphere<'a>(
 
     OneOrVec::Vec(layers.collect::<Vec<_>>())
 }
-
-mod old;
 
 /// See <https://en.wikipedia.org/wiki/Circle_of_a_sphere>
 fn radius_at_sphere_height(radius: f32, height_from_center: f32, allow_frac: bool) -> f32 {
@@ -494,303 +430,139 @@ fn radius_at_sphere_height(radius: f32, height_from_center: f32, allow_frac: boo
     }
 }
 
-#[cfg(test)]
-mod tests {
-    // /// Array that can be slice into a smaller sub-array
-    // ///
-    // /// Also see the [crate] level reference.
-    // pub trait SubArray {
-    //     /// The value type of this array.
-    //     ///
-    //     /// This is the `T` in `[T; N]` on regular arrays.
-    //     type Item;
-
-    //     /// Get a reference to a sub-array of length `N` starting at `offset`.
-    //     ///
-    //     /// # Panics
-    //     /// Panics if `offset + N` exceeds the length of this array.
-    //     ///
-    //     /// # Example
-    //     /// ```
-    //     /// use sub_array::SubArray;
-    //     ///
-    //     /// let arr: [u8; 5] = [9, 8, 7, 6, 5];
-    //     ///
-    //     /// // Get a sub-array starting at offset 3
-    //     /// let sub: &[u8; 2] = arr.sub_array_ref(3);
-    //     /// assert_eq!(sub, &[6, 5]);
-    //     /// ```
-    //     fn sub_array_ref<const N: usize>(&self, offset: usize) -> &[Self::Item; N];
-
-    //     /// Get a mutable reference to a sub-array of length `N` starting at
-    //     /// `offset`.
-    //     ///
-    //     /// # Panics
-    //     /// Panics if `offset + N` exceeds the length of this array.
-    //     ///
-    //     /// # Example
-    //     /// ```
-    //     /// use sub_array::SubArray;
-    //     ///
-    //     /// let mut arr: [u8; 5] = [9, 8, 7, 6, 5];
-    //     ///
-    //     /// // Get a mutable sub-array starting at offset 0
-    //     /// let sub: &mut [u8; 2] = arr.sub_array_mut(0);
-    //     /// assert_eq!(sub, &mut [9, 8]);
-    //     /// ```
-    //     fn sub_array_mut<const N: usize>(&mut self, offset: usize) -> &mut [Self::Item; N];
-    // }
-
-    // /// Implementation on regular arrays
-    // impl<T, const M: usize> SubArray for [T; M] {
-    //     type Item = T;
-
-    //     fn sub_array_ref<const N: usize>(&self, offset: usize) -> &[Self::Item; N] {
-    //         self[offset..(offset + N)].try_into().unwrap()
-    //     }
-
-    //     fn sub_array_mut<const N: usize>(&mut self, offset: usize) -> &mut [Self::Item; N] {
-    //         (&mut self[offset..(offset + N)]).try_into().unwrap()
-    //     }
-    // }
-
-    use vmf_parser_nom::ast::Vmf;
-
-    use crate::map::Map;
-    use crate::prelude::Vector3;
-    use crate::vmf::ToLower;
-    use crate::StrType;
-
-    use super::*;
-
-    fn make_shape<'a>(
-        shape: &str, bounds: &Bounds, sides: u32, mats: &[&Material<'a>; 6], options: &SolidOptions,
-    ) -> OneOrVec<Solid<'a>> {
-        // TODO: horrible
-        // let spike_bounds = &Bounds {max: Vector3 {z: bounds.max.z / 2.0, ..bounds.max }, ..bounds.clone()};
-        let spike_bounds = &bounds;
-        match shape {
-            "cube" => OneOrVec::One(cube(bounds, mats[..].try_into().unwrap(), options)),
-            "wedge" => OneOrVec::One(wedge(bounds, mats[..5].try_into().unwrap(), options)),
-            "spike" => old::spike(spike_bounds, sides, mats[..2].try_into().unwrap(), options),
-            "cylinder" => old::cylinder(bounds, sides, mats[..3].try_into().unwrap(), options),
-            // "frustum" => frustum(bounds, sides, mats[..].try_into().unwrap(), options),
-            "sphere" => old::sphere(bounds, sides, mats[..2].try_into().unwrap(), options),
-            str => panic!("unkown shape {}", str),
-            // _ => OneOrVec::new()
-        }
-    }
-
-    #[test]
-    #[ignore]
-    fn test_frustum_cone() {
-        let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
-        let mats = [&dev_person; 3];
-        let options = &SolidOptions::default().allow_frac();
-        let mut map = Map::default();
-
-        let top = ellipse_verts(Vector3::new(512.0, 512.0, 512.0), 256.0, 256.0, 32, options);
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
-        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        let top = ellipse_verts(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
-        let bottom =
-            ellipse_verts(Vector3::new(512.0, 512.0, -512.0), 256.0, 256.0, 32, options);
-        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        let top = ellipse_verts(Vector3::new(0.0, 0.0, 512.0), 1024.0, 0.0, 32, options);
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, 0.0), 256.0, 256.0, 32, options);
-        let solid =
-            Solid::new(prism(top, bottom, false, mats, options).skip(1).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        let mut map = Map::default();
-        let top = ellipse_verts(Vector3::new(0.0, 0.0, 512.0), 5120.0, 0.0, 32, options);
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, 0.0), 128.0, 512.0, 32, options);
-        let solid =
-            Solid::new(prism(top, bottom, false, mats, options).skip(1).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        write_test_vmf(map.to_lower());
-        panic!("worked")
-    }
-
-    // TODO: better, make actual unit test / move to integeration / merge into massive test of every shape
-    /// doc test code as unit test
-    #[test]
-    #[ignore]
-    fn frustum_cone_doc_test() {
-        let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
-        let mats = [&dev_person; 3];
-        let options = &SolidOptions::default();
-        let mut map = Map::default();
-        map.options.cordon = Some(crate::generation::Bounds::new(
-            Vector3::new(-5120.0, -5120.0, -5120.0),
-            Vector3::new(5120.0, 5120.0, 5120.0),
-        ));
-        // prevent FindPortalSide errors O_o
-        map.defaults_l4d2();
-        map.entities[0].props[0].value = "0 0 2048".into();
-        dbg!(&map.entities[0].props[0]);
-
-        // a perfect 512x512x512 cylinder
-        let top = ellipse_verts(Vector3::new(0.0, 0.0, 256.0), 256.0, 256.0, 32, options);
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 32, options);
-        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        // a 512x512x512 frustum
-        let top = ellipse_verts(Vector3::new(0.0, 0.0, 256.0), 128.0, 128.0, 32, options);
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 32, options);
-        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        // a 512x512x512 cone
-        let top = std::iter::repeat(Vector3::new(0.0, 0.0, 256.0));
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, -256.0), 256.0, 256.0, 16, options);
-        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        // a 512x512x512 upside down cone
-        let top = ellipse_verts(Vector3::new(0.0, 0.0, 256.0), 256.0, 256.0, 16, options);
-        let bottom = std::iter::repeat(Vector3::new(0.0, 0.0, -256.0));
-        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        // a weird shape
-        // causes vbsp warnings if not enclosed and no enitities (others dont tho)
-        let top = ellipse_verts(Vector3::new(512.0, 512.0, 512.0), 256.0, 256.0, 32, options);
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
-        let solid = Solid::new(prism(top, bottom, false, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        // a weird shape with the bottom preferred NO WARNINGS? O_O?
-        let top = ellipse_verts(Vector3::new(512.0, 512.0, 512.0), 256.0, 256.0, 32, options);
-        let bottom = ellipse_verts(Vector3::new(0.0, 0.0, 0.0), 1024.0, 512.0, 32, options);
-        let solid = Solid::new(prism(top, bottom, true, mats, options).collect::<Vec<_>>());
-        map.add_solid(solid);
-
-        let vmf = map.to_lower();
-
-        write_test_vmf(map.to_lower());
-        panic!("worked")
-    }
-
-    #[test]
-    #[ignore]
-    fn shape_test() {
-        // shape
-        // size
-        // size long
-        // sides
-        // let
-        // 16x16 to 512
-
-        let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
-        let mats = [&dev_person; 6];
-
-        const CELL_SIZE: i32 = 512;
-
-        let shapes = ["cube", "wedge", "spike", "cylinder", "sphere"];
-        // let shapes = ["cube", "wedge", "spike", "cylinder"];
-        // let shapes = ["spike"];
-        // let sides = [3, 4, 8, 16, 32, 63];
-        // let sides = [3, 4, 8, 16, 32, 63];
-        let sides = [3, 4, 8, 16];
-        // let sizes = [16, 32, 64, 128, 256, 512];
-        let sizes = [512, 256, 128, 64, 32, 16];
-        let options = SolidOptions::default();
-
-        let mut x = -1;
-        let mut y = -1;
-        let mut z = -1;
-
-        // TODO: FIXME: REMEMBER TO ADD BACK SPHERE CAPS
-        // TODO: align ignore pos
-        let mut map = Map::default();
-        for shape in shapes {
-            for num_sides in sides {
-                z = 0;
-                for size in sizes {
-                    // z += CELL_SIZE;
-                    z += 0;
-                    let x = (x + CELL_SIZE * 2 - size * 2) as f32;
-                    let y = (CELL_SIZE / 2 + y - size / 2) as f32;
-                    let z = (CELL_SIZE / 2 + z - size / 2) as f32;
-                    let min = Vector3::new(x, y, z);
-                    let max = min.clone() + size as f32;
-                    let bounds = Bounds::new(min, max);
-                    // map.add_solid(cube(&bounds, mats, &options));
-                    // map.add_solid(wedge(&bounds, mats[..].try_into().unwrap(), &options));
-                    map.add_solid2(make_shape(shape, &bounds, num_sides, &mats, &options));
-                }
-                x += CELL_SIZE * 2;
-            }
-            x = 0;
-            y += CELL_SIZE;
-        }
-
-        write_test_vmf(map.to_lower());
-
-        panic!("worked")
-    }
-
-    // #[ignore]
-    // #[test]
-    // fn cylinder_test() {
-    //     dbg!();
-    //     let mut map = Map::default();
-    //     let options = SolidOptions::default();
-
-    //     map.add_solid(cylinder(
-    //         &Bounds::new(Vector3::new(-16.0, -16.0, 0.0), Vector3::new(16.0, 16.0, 32.0)),
-    //         4,
-    //         [&Material::new("DEV/DEV_MEASUREWALL01C"); 3],
-    //         &options,
-    //     ));
-
-    //     write_test_vmf(map.to_lower());
-    // }
-
-    fn write_test_vmf(vmf: Vmf<StrType<'_>>) {
-        const OUTPUT_PATH: &str =
-            "/home/redram/.local/share/Steam/steamapps/common/Left 4 Dead 2/custom/maps/output2.vmf";
-        _ = std::fs::remove_file(OUTPUT_PATH);
-        let mut output =
-            std::fs::OpenOptions::new().write(true).create(true).open(OUTPUT_PATH).unwrap();
-
-        use std::io::Write;
-        writeln!(output, "{:#}", vmf).unwrap();
-    }
-
-    #[ignore]
-    #[test]
-    fn sphere_test() {
-        dbg!();
-        let mut map = Map::default();
-        let options = SolidOptions { world_align: false, ..SolidOptions::default() };
-
-        let mats = [
-            &Material::new("tools/toolsnodraw"),
-            &Material::new("tools/toolsnodraw"),
-            &Material::new("DEV/DEV_MEASUREWALL01C"),
-        ];
-        for solid in sphere(
-            // &Bounds::new(Vector3::new(-256.0, -256.0, 0.0), Vector3::new(256.0, 256.0, 512.0)),
-            &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),
-            64,
-            mats,
-            &options,
-        )
-        .to_vec()
-        {
-            map.add_solid(solid);
-        }
-
-        write_test_vmf(map.to_lower());
-
-        panic!("done")
-    }
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash)]
+pub(crate) struct SphereOptions {
+    size: usize,
 }
+
+pub(crate) fn sphere_disp<'a>(
+    bounds: &Bounds, mats: [&'a Material<'a>; 1], options: &'a SolidOptions,
+    sphere_options: &SphereOptions,
+) -> OneOrVec<Solid<'a>> {
+    // squeeze bounds to cube
+    // project disps to sphere
+    // squeeze to bounds
+
+    // no, squeeze bounds coords into cube
+    // unsqueeze result
+
+    let size = sphere_options.size;
+
+    let mut cube = cube(bounds, &[mats[0]; 6], options);
+
+    for side in cube.sides.iter_mut() {
+        // eprintln!();
+        // project points to sphere
+        let mut disp = Displacement::new_plane(side.plane.clone(), size);
+        let ideal = disp.ideal_points();
+        let projected = ideal.inner.iter().map(|p| {
+            // convert to unit -1..=1
+            let unit = bounds_to_unit(bounds, p);
+            let projected = disp::project_unit_cube_to_sphere(&unit);
+            unit_to_bounds(bounds, &projected)
+            // let projected = unit.normalize();
+
+            // eprintln!("unit: {}\x1b[20Gprojected: {}\x1b[70Gp units: {}", unit, projected, unit_to_bounds(bounds, &projected));
+            // println!("{:.2},{:.2},{:.2}", projected.x,projected.y,projected.z);
+            // println!("{} {} {}", projected.x,projected.y,projected.z);
+            // convert back to real coords.
+            // projected
+        });
+
+        // convert ideal and projected to dir and distances
+        let mut dirs = Vec2d::new(Vec2d::strides(size));
+        let mut dists = Vec2d::new(Vec2d::strides(size));
+        let alphas = Vec2d::from_parts(vec![0.0; disp.len * disp.len], Vec2d::strides(size));
+        for (ideal, projected) in ideal.inner.iter().zip(projected) {
+            // let (mut dir, dist) = ideal.dir_and_dist(&projected);
+            let (mut dir, dist) = ideal.dir_and_dist(&projected);
+            if dir.x.is_nan() {
+                // eprintln!("DIR IS NAN: {}", dir);
+                dir = Vector3::origin();
+            }
+            dirs.inner.push(dir);
+            dists.inner.push(dist);
+
+            // dirs.inner.push(projected);
+            // dirs.inner.push(Vector3::);
+            // dists.inner.push(500.0);
+        }
+        disp.normals = dirs;
+        disp.distances = dists;
+        disp.alphas = alphas;
+
+        side.disp = Some(disp);
+    }
+
+    // for side in cube.sides.iter_mut() {
+    //     // let normal = side.plane.normal();
+    //     // let x = side.disp.unwrap().normals = side.disp.unwrap().
+    // }
+
+
+    OneOrVec::One(cube)
+}
+
+// TODO: name
+fn bounds_to_unit(bounds: &Bounds, point: &Vector3<f32>) -> Vector3<f32> {
+    let x = unit_range(bounds.min.x, bounds.max.x, point.x);
+    let y = unit_range(bounds.min.y, bounds.max.y, point.y);
+    let z = unit_range(bounds.min.z, bounds.max.z, point.z);
+
+    Vector3::new(x, y, z)
+}
+
+fn unit_to_bounds(bounds: &Bounds, unit: &Vector3<f32>) -> Vector3<f32> {
+    let t = vec3_unit_to_multi(unit); // -1..=1 to 0..=1
+
+    let x = disp::lerp(bounds.min.x, bounds.max.x, t.x);
+    let y = disp::lerp(bounds.min.y, bounds.max.y, t.y);
+    let z = disp::lerp(bounds.min.z, bounds.max.z, t.z);
+    Vector3::new(x, y, z)
+}
+
+// TODO:DOCS:
+/// value = bottom -> -1
+///
+/// value = top -> 1
+// TODO: name
+fn unit_range(bottom: f32, top: f32, value: f32) -> f32 {
+    assert!(top > bottom);
+    let v = (value - bottom) / (top - bottom); // 0..=1
+    v * 2.0 - 1.0 // -1..=1
+}
+
+fn unit_to_multiplier(value: f32) -> f32 {
+    (value + 1.0) / 2.0
+}
+
+fn vec3_unit_to_multi(value: &Vector3<f32>) -> Vector3<f32> {
+    let x = unit_to_multiplier(value.x);
+    let y = unit_to_multiplier(value.y);
+    let z = unit_to_multiplier(value.z);
+    Vector3::new(x, y, z)
+}
+
+#[test]
+#[cfg(test)]
+fn unit() {
+    fn test(truth: f32, bottom: f32, top: f32, value: f32) {
+        assert_eq!(truth, unit_range(bottom, top, value));
+        assert_eq!(value, disp::lerp(bottom, top, unit_to_multiplier(truth)));
+    }
+    test(-1.0, 0.0, 1.0, 0.0);
+    test(-0.5, 0.0, 1.0, 0.25);
+    test(0.0, 0.0, 1.0, 0.5);
+    test(0.5, 0.0, 1.0, 0.75);
+    test(1.0, 0.0, 1.0, 1.0);
+    test(-1.0, -200.0, 200.0, -200.0);
+    test(0.0, -200.0, 200.0, 0.0);
+    test(1.0, -200.0, 200.0, 200.0);
+    test(-1.0, -100.0, 200.0, -100.0);
+    test(0.0, -100.0, 200.0, 50.0);
+    test(1.0, -100.0, 200.0, 200.0);
+}
+
+
+#[cfg(test)]
+mod tests;

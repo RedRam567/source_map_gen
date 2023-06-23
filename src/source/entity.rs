@@ -1,4 +1,4 @@
-//! Contains [`PointEntity`] and other Source Engine Entities.
+//! [`PointEntity`] and other Source Engine entities
 
 use std::fmt::Display;
 
@@ -12,7 +12,7 @@ use crate::{
     vmf::ToLower,
 };
 
-// format keyvalues on valve dev wiki to doc comments:
+// shell. format keyvalues on valve dev wiki to doc comments:
 // xclip -o -sel clip | sed ':a;N;$!ba;s/\n    //g' | sed '/^$/d' | sed ':a;N;$!ba;s/\n)/)/g' | sed -e 's_^_/// _' -e 's/<.*>//g' -e 's/ (in all games since)//g' -e 's/(/`(/' -e 's/)/)`/'
 
 /// Push strtype if not empty.

@@ -1,4 +1,4 @@
-//! One step above vmf blocks and properties. [`Solid`]s and [`Entity`]s. Also [`Map`], a group of `Solids` and `Entities`
+//! Low level abstractions over parsed `VMF` [`Block`](vmf_parser_nom::ast::Block)s and [`Property`]s
 
 pub(crate) mod entity;
 pub(crate) mod solid;
@@ -10,11 +10,10 @@ pub use solid::*;
 pub use texture::*;
 pub use vector::*;
 
-use crate::OneOrVec;
-use crate::{StrType};
 use crate::generation::Bounds;
+use crate::{StrType};
+use crate::utils::OneOrVec;
 use vmf_parser_nom::ast::Property;
-
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct MapOptions {
@@ -82,7 +81,7 @@ impl<'a> Map<'a> {
     // TODO: better
     /// uses [`OneOrVec`]
     pub fn add_solid2(&mut self, solid: OneOrVec<Solid<'a>>) {
-        self.solids.extend(solid.to_vec());
+        self.solids.extend(solid.into_vec());
     }
 }
 

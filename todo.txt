@@ -8,16 +8,15 @@ freaking get color working
     just get basic stuff
 
 shapes
-    wedges
-    spikes, oblique
-    cylinders, oblique?
+    // wedges
+    // spikes, oblique
+    // cylinders, oblique?
     arches
-    spheres
-    prysms, oblique?
-    truncated prisms? (O_O) just do custom top/bottom plane and trust(tm) the user
+    // spheres
+    // prysms, oblique?
+    // truncated prisms? (O_O) just do custom top/bottom plane and trust(tm) the user
         wait just do clip tool
-    frustum (sphere layer)
-    Toroidal prism (pit)
+    // frustum (sphere layer)
     stellation?
         how tf find center of plane?
 

@@ -1,8 +1,7 @@
-use super::*;
 use super::radius_at_sphere_height;
+use super::*;
 
 // use super::radius_at_sphere_height_xy;
-
 
 fn radius_at_sphere_height_xy(
     x_radius: f32, y_radius: f32, height_from_center: f32, allow_frac: bool,
@@ -12,23 +11,10 @@ fn radius_at_sphere_height_xy(
     Vector2::new(x, y)
 }
 
-use crate::prelude::Plane;
-
-use crate::prelude::Vector2;
-
-use std::dbg;
-
-use crate::prelude::Side;
-
 use super::ellipse_verts_2d;
-
-use crate::IterWithNext;
-
-use crate::prelude::Solid;
-
-use crate::OneOrVec;
-
-use crate::prelude::Material;
+use crate::prelude::{Material, Plane, Side, Solid, Vector2};
+use crate::utils::{IterWithNext, OneOrVec};
+use std::dbg;
 
 // top, down, "right"
 // TODO: wibbly cone? arbitaray tip
@@ -203,8 +189,13 @@ pub fn sphere<'a>(
         // make circle bases
         let top_circle =
             ellipse_verts_2d(center_xy.clone(), top_radius_x, top_radius_y, num_sides, options);
-        let bottom_circle =
-            ellipse_verts_2d(center_xy.clone(), bottom_radius_x, bottom_radius_y, num_sides, options);
+        let bottom_circle = ellipse_verts_2d(
+            center_xy.clone(),
+            bottom_radius_x,
+            bottom_radius_y,
+            num_sides,
+            options,
+        );
 
         // make frustum layer NOTE: height absolute
         let frustum = frustum_old(

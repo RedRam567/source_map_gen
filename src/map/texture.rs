@@ -21,7 +21,7 @@ impl<'a> Material<'a> {
 }
 
 /// Infomation about a texture on a [`Plane`]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub struct Texture<'a> {
     pub material: StrType<'a>,
     pub uaxis: UVAxis<f32>,
@@ -137,7 +137,7 @@ impl<'a> Default for TextureBuilder<'a> {
 /// `trans` is a translation along the axis.
 /// `scale` seems to multiply the output result.
 /// <https://developer.valvesoftware.com/wiki/Valve_Map_Format#U.2FV_Axis>
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub struct UVAxis<T> {
     pub x: T,
     pub y: T,

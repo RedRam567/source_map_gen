@@ -1,4 +1,5 @@
 pub mod shape;
+pub mod disp;
 
 use crate::prelude::{Plane, Vector2, Vector3};
 

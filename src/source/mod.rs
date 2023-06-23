@@ -1,4 +1,6 @@
-//! Source entities and higher level structs. See also [`crate::map`].
+//! Source entities and higher level structs
+//!
+//! See also [`crate::map`]
 
 pub(crate) mod entity;
 

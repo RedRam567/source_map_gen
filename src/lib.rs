@@ -26,8 +26,6 @@
 #![deny(rustdoc::broken_intra_doc_links)] // impossible to deny normal compile :/
 #![deny(clippy::semicolon_if_nothing_returned)]
 
-use std::iter::Peekable;
-
 // #[deprecated]
 pub mod generation;
 pub mod generation2;
@@ -35,6 +33,7 @@ pub mod light;
 pub mod map;
 pub mod source;
 pub mod vmf;
+pub(crate) mod utils;
 // pub mod scripting;
 
 pub mod prelude {
@@ -44,173 +43,33 @@ pub mod prelude {
     pub(crate) use crate::StrType;
 }
 
+/// Fork of [`std::dbg`] but with the output not pretty printed.
+macro_rules! dbg2 {
+    // NOTE: We cannot use `concat!` to make a static string as a format argument
+    // of `eprintln!` because `file!` could contain a `{` or
+    // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
+    // will be malformed.
+    () => {
+        std::eprintln!("[{}:{}]", std::file!(), std::line!())
+    };
+    ($val:expr $(,)?) => {
+        // Use of `match` here is intentional because it affects the lifetimes
+        // of temporaries - https://stackoverflow.com/a/48732525/1063961
+        match $val {
+            tmp => {
+                std::eprintln!("[{}:{}] {} = {:?}",
+                    std::file!(), std::line!(), std::stringify!($val), &tmp);
+                tmp
+            }
+        }
+    };
+    ($($val:expr),+ $(,)?) => {
+        ($(std::dbg!($val)),+,)
+    };
+}
+
 /// String type for the library. Might change or be in-lined.
 pub(crate) type StrType<'a> = std::borrow::Cow<'a, str>;
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum OneOrVec<T> {
-    One(T),
-    Vec(Vec<T>),
-}
-
-impl<T> OneOrVec<T> {
-    pub const fn new() -> Self {
-        OneOrVec::Vec(Vec::new())
-    }
-    pub fn with_capacity(cap: usize) -> Self {
-        OneOrVec::Vec(Vec::with_capacity(cap))
-    }
-    pub const fn is_one(&self) -> bool {
-        matches!(*self, Self::One(_))
-    }
-    pub const fn is_vec(&self) -> bool {
-        matches!(*self, Self::Vec(_))
-    }
-    pub fn to_vec(self) -> Vec<T> {
-        match self {
-            OneOrVec::One(item) => vec![item],
-            OneOrVec::Vec(vec) => vec,
-        }
-    }
-    pub fn to_vec_reserve(self, additional: usize) -> Vec<T> {
-        match self {
-            OneOrVec::One(item) => {
-                let mut vec = Vec::with_capacity(additional + 1);
-                vec.push(item);
-                vec
-            }
-            OneOrVec::Vec(mut vec) => {
-                vec.reserve(additional);
-                vec
-            }
-        }
-    }
-    pub fn len(&self) -> usize {
-        match self {
-            OneOrVec::One(_) => 1,
-            OneOrVec::Vec(vec) => vec.len(),
-        }
-    }
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-}
-
-impl<T: Clone> OneOrVec<T> {
-    pub fn push_or_extend(&mut self, other: Self) {
-        // get around cant mutate self or use of moved self errors (wtf)
-        let mut myself = self;
-
-        match (&mut myself, other) {
-            (OneOrVec::One(this), OneOrVec::One(other)) => {
-                *myself = OneOrVec::Vec(vec![this.clone(), other]);
-            }
-            (OneOrVec::One(this), OneOrVec::Vec(mut other)) => {
-                other.insert(0, this.clone());
-                *myself = OneOrVec::Vec(other);
-            }
-            (OneOrVec::Vec(this), OneOrVec::One(other)) => {
-                this.push(other);
-            }
-            (OneOrVec::Vec(this), OneOrVec::Vec(other)) => {
-                this.extend(other);
-            }
-        }
-    }
-}
-
-// TODO:DOCS: not tested because dont want public, use make::visibility
-/// An iterator of the current and next value. Last `next()` call returns the last
-/// item and the first item.
-///
-/// # Examples
-///
-/// ```rust,ignore
-#[doc = concat!("use ", std::module_path!(), "::IterWithNext;")]
-///
-/// let mut iter = IterWithNext::new([0].into_iter());
-/// assert_eq!(Some((0, 0)), iter.next());
-/// assert_eq!(None, iter.next());
-///
-/// let mut iter = IterWithNext::new([0, 1].into_iter());
-/// assert_eq!(Some((0, 1)), iter.next());
-/// assert_eq!(Some((1, 0)), iter.next());
-/// assert_eq!(None, iter.next());
-///
-///  let mut iter = IterWithNext::new([0, 1, 2].into_iter());
-/// assert_eq!(Some((0, 1)), iter.next());
-/// assert_eq!(Some((1, 2)), iter.next());
-/// assert_eq!(Some((2, 0)), iter.next());
-/// assert_eq!(None, iter.next());
-/// ```
-#[derive(Clone, Debug)]
-pub(crate) struct IterWithNext<I, T>
-where
-    I: Iterator<Item = T>,
-{
-    pub iter: Peekable<I>,
-    pub first_item: Option<T>,
-}
-
-impl<I, T> IterWithNext<I, T>
-where
-    I: Iterator<Item = T>,
-{
-    pub fn new(iter: I) -> Self {
-        Self { iter: iter.peekable(), first_item: None }
-    }
-}
-
-impl<I, T> Iterator for IterWithNext<I, T>
-where
-    I: Iterator<Item = T>,
-    T: Clone,
-{
-    type Item = (T, T);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let current = self.iter.next()?; // if none, iteration over
-        if self.first_item.is_none() {
-            // set first item
-            self.first_item = Some(current.clone());
-        }
-
-        // peek else first_item else None
-        let next = match self.iter.peek() {
-            Some(v) => v.clone(),
-            // if none, iter was len 1, return none
-            // TODO: is this ever none?
-            None => match self.first_item.clone() {
-                Some(v) => v,
-                None => {
-                    if cfg!(debug_assertions) {
-                        unreachable!("impossible for first_item to be None");
-                    } else {
-                        // SAFETY: `first_item` is always set here as if None on
-                        // first iteration, it imediatly returns none
-                        unsafe { std::hint::unreachable_unchecked() }
-                    }
-                }
-            },
-        };
-
-        Some((current, next))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
-    }
-}
-
-impl<I, T> ExactSizeIterator for IterWithNext<I, T>
-where
-    I: ExactSizeIterator<Item = T>,
-    T: Clone,
-{
-    fn len(&self) -> usize {
-        self.iter.len()
-    }
-}
 
 // preferred rust group order (pub first in the same group)
 // extern
@@ -278,6 +137,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use utils::*;
 
     #[test]
     fn iter_peek() {

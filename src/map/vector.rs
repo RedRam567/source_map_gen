@@ -39,6 +39,10 @@ pub struct Vector3<T> {
 }
 
 impl Vector3<f32> {
+    pub const fn origin() -> Self {
+        Self::new(0.0, 0.0, 0.0)
+    }
+
     pub fn new_with_round(mut x: f32, mut y: f32, mut z: f32, allow_frac: bool) -> Self {
         if !allow_frac {
             x = x.round();
@@ -162,6 +166,13 @@ impl<T: Copy> Vector3<T> {
     }
 }
 
+impl<T> From<[T; 3]> for Vector3<T> {
+    fn from(value: [T; 3]) -> Self {
+        let [x, y, z] = value;
+        Self { x, y, z }
+    }
+}
+
 impl<T: Display> Display for Vector3<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {} {}", self.x, self.y, self.z)
@@ -192,6 +203,10 @@ impl<T> Vector2<T> {
 }
 
 impl Vector2<f32> {
+    pub const fn origin() -> Self {
+        Self::new(0.0, 0.0)
+    }
+
     pub fn new_with_round(mut x: f32, mut y: f32, allow_frac: bool) -> Self {
         if !allow_frac {
             x = x.round();

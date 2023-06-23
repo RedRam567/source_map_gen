@@ -1,3 +1,5 @@
+//! Lighting, colorspaces, and time
+
 pub mod colorspace;
 pub mod time;
 
