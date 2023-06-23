@@ -147,7 +147,7 @@ impl<'a> ToLower<Block<StrType<'a>>> for Side<'a> {
 impl<'a> ToLower<Block<StrType<'a>>> for DispInfo {
     fn into_lower(self) -> Block<StrType<'a>> {
         use std::fmt::Write;
-        let mut props = vec![
+        let props = vec![
             Property::new("power", self.power.to_string()),
             Property::new("startposition", format!("[{}]", self.start_position)),
             Property::new("flags", self.flags.to_string()),

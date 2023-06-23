@@ -116,7 +116,7 @@ fn frustum_cone_doc_test() {
 
     let vmf = map.to_lower();
 
-    write_test_vmf(map.to_lower());
+    write_test_vmf(vmf);
     panic!("worked")
 }
 
@@ -240,7 +240,6 @@ fn sphere_test() {
 #[ignore]
 #[test]
 fn sphere_disp_test() {
-    use std::path::Path;
     dbg!();
     const TRUTH_PATH: &str = "/home/redram/Documents/disp_test.vmf";
     let truth_input = std::fs::read_to_string(TRUTH_PATH).unwrap();
@@ -277,7 +276,7 @@ fn sphere_disp_test() {
         &sphere_options,
     );
 
-    let mut sphere = sphere.into_vec()[0].clone();
+    let sphere = sphere.into_vec()[0].clone();
 
     map.add_solid(sphere.clone());
 
@@ -347,16 +346,15 @@ fn sphere2() {
 #[ignore]
 #[test]
 fn test_order() {
-    use std::path::Path;
     dbg!();
-    const TRUTH_PATH: &str = "/home/redram/Documents/disp_test.vmf";
-    let truth_input = std::fs::read_to_string(TRUTH_PATH).unwrap();
-    let truth_vmf =
-        vmf_parser_nom::parse::<&str, vmf_parser_nom::error::VerboseError<_>>(&truth_input)
-            .unwrap();
-    let block = &truth_vmf.blocks[3].blocks[0];
+    // const TRUTH_PATH: &str = "/home/redram/Documents/disp_test.vmf";
+    // let truth_input = std::fs::read_to_string(TRUTH_PATH).unwrap();
+    // let truth_vmf =
+    //     vmf_parser_nom::parse::<&str, vmf_parser_nom::error::VerboseError<_>>(&truth_input)
+    //         .unwrap();
+    // let block = &truth_vmf.blocks[3].blocks[0];
     // eprintln!("{}", block);
-    let truth_sphere = block_to_solid(block);
+    // let truth_sphere = block_to_solid(block);
     // dbg!(truth_sphere);
     // panic!("e");
 
@@ -370,7 +368,7 @@ fn test_order() {
         &Material::new("DEV/DEV_MEASUREWALL01C"),
     ];
     const SIZE: f32 = 128.0;
-    let mut sphere = sphere_disp(
+    let sphere = sphere_disp(
         // &Bounds::new(Vector3::new(-256.0, -256.0, -256.0), Vector3::new(256.0, 256.0, 256.0)),
         &Bounds::new(Vector3::new(-SIZE, -SIZE, -SIZE), Vector3::new(SIZE, SIZE, SIZE)),
         // &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),

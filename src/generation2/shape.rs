@@ -402,8 +402,8 @@ pub fn sphere<'a>(
         let top_center = Vector3 { z: height_top_from_center, ..center };
         let bottom_center = Vector3 { z: height_bottom_from_center, ..center };
 
-        let top_circle: _ = ellipse_verts(top_center, top_radius_x, top_radius_y, sides, options);
-        let bottom_circle: _ =
+        let top_circle = ellipse_verts(top_center, top_radius_x, top_radius_y, sides, options);
+        let bottom_circle =
             ellipse_verts(bottom_center, bottom_radius_x, bottom_radius_y, sides, options);
 
         // TODO: allow choosing prefer top/bottom/auto
@@ -499,7 +499,6 @@ pub(crate) fn sphere_disp<'a>(
     //     // let x = side.disp.unwrap().normals = side.disp.unwrap().
     // }
 
-
     OneOrVec::One(cube)
 }
 
@@ -562,7 +561,6 @@ fn unit() {
     test(0.0, -100.0, 200.0, 50.0);
     test(1.0, -100.0, 200.0, 200.0);
 }
-
 
 #[cfg(test)]
 mod tests;
