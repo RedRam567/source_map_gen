@@ -3,7 +3,7 @@ name = "source_map_gen"
 version = "0.1.0"
 authors = ["RedRam"]
 description = "A WIP map generator and library for Source Engine games"
-# license = "TBA"
+license-file = "LICENSE" # custom license
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
