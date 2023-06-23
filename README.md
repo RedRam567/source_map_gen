@@ -1,7 +1,7 @@
 # source_proc_gen
 
-[![Crates.io](https://img.shields.io/crates/v/vmf_parser_nom)](https://crates.io/crates/sourceprocgen)
-[![docs.rs](https://img.shields.io/docsrs/vmf_parser_nom)](https://docs.rs/vmf_parser_nom/latest/vmf_parser_nom)
+[![Crates.io](https://img.shields.io/crates/v/vmf_parser_nom)](https://crates.io/crates/source_map_gen)
+[![docs.rs](https://img.shields.io/docsrs/source_map_gen)](https://docs.rs/vmf_parser_nom/latest/source_map_gen)
 
 A WIP map generator for Source Engine games.
 
