@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::utils::Vec2d;
 use std::fmt::Display;
 
-/// A peice of map geometry made out of sides. Ex: a cube, cylinder.
+/// A peice of map geometry made out of [`Side`]s.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Solid<'a> {
     pub sides: Vec<Side<'a>>,
@@ -35,14 +35,14 @@ impl<'a> Solid<'a> {
 }
 
 /// A side of a [`Solid`].
+///
+/// See also: [`Displacement`] and [`DispInfo`]
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Side<'a> {
     pub plane: Plane,
     pub texture: Texture<'a>,
     pub disp: Option<Displacement>,
 }
-
-// TODO: normal, slope, wtf is default
 
 impl<'a> Side<'a> {
     pub const fn new(plane: Plane, texture: Texture<'a>) -> Self {
@@ -63,7 +63,10 @@ impl<'a> Side<'a> {
     }
 }
 
-/// See <https://developer.valvesoftware.com/wiki/.vmf#Dispinfo>
+// TODO: location?
+/// TODO:DOCS:
+///
+/// See also: <https://developer.valvesoftware.com/wiki/.vmf#Dispinfo>
 #[derive(Clone, Debug, PartialEq)]
 pub struct DispInfo {
     // not sure if i32 or u32 in the valve impl
@@ -141,9 +144,8 @@ pub struct DispInfo {
     /// map. A false flag removes the vertex from the compiled map. Note that -1 is all bits set to
     /// true.
     ///
-    /// Pretty sure this can just be ignored. Basically its just a safety net of sorts, as you can
-    /// modify the removed vertex in Hammer to be accidently non-colinear but vbsp will remove it
-    /// and also save 1 triangle (woo hoo).
+    /// Pretty sure this can just be ignored. For sewing displacements of differing power. Its
+    /// either a miniscule optimization to save like 5 triangles or a safety net / UX feature maybe
     ///
     /// All zeros means to remove all verts; vbsp will only remove some near edge and not even all
     /// of them (huh). Also last i32 always seems to be -1 / has no effect.
@@ -165,11 +167,13 @@ impl DispInfo {
         DispInfo::NO_PHYS_COLLISION | DispInfo::NO_HULL_COLLISION | DispInfo::NO_RAY_COLLISION;
 }
 
+// TODO: VERIFY, IMPORTANT
 // The Valve wiki agrees with that / is kinda vague but in practice it seems like the opposite.
-/// A flat geometric plane.
+/// A flat plane in 3d space.
+///
 /// When looking directly at the plane, `bottom_left` will be in the bottom left
 /// and so on, with the normal being towards you.
-/// See <https://developer.valvesoftware.com/wiki/Valve_Map_Format#Planes>.
+/// See also: <https://developer.valvesoftware.com/wiki/Valve_Map_Format#Planes>.
 #[derive(Clone, Default, Debug, PartialEq, PartialOrd)]
 pub struct Plane {
     pub bottom_left: Vector3<f32>,
@@ -227,15 +231,21 @@ impl Plane {
     pub fn with_mat<'a>(self, material: &Material<'a>) -> Side<'a> {
         let normal = self.normal_dir();
         let (uaxis, vaxis) = UVAxis::from_norm(&normal);
-        let Material { material, light_scale } = material.clone();
-        Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
+
+        let mut texture = material.clone().into_texture();
+        texture.uaxis = uaxis;
+        texture.vaxis = vaxis;
+        Side::new(self, texture)
     }
 
     pub fn with_mat_align_world<'a>(self, material: &Material<'a>) -> Side<'a> {
         let normal = self.normal_dir();
         let (uaxis, vaxis) = UVAxis::from_norm_align_world(&normal);
-        let Material { material, light_scale } = material.clone();
-        Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
+
+        let mut texture = material.clone().into_texture();
+        texture.uaxis = uaxis;
+        texture.vaxis = vaxis;
+        Side::new(self, texture)
     }
 
     pub fn with_mat_align<'a>(self, material: &Material<'a>, world_align: bool) -> Side<'a> {
@@ -245,8 +255,11 @@ impl Plane {
         } else {
             UVAxis::from_norm(&normal)
         };
-        let Material { material, light_scale } = material.clone();
-        Side::new(self, Texture::new(material, uaxis, vaxis, light_scale))
+
+        let mut texture = material.clone().into_texture();
+        texture.uaxis = uaxis;
+        texture.vaxis = vaxis;
+        Side::new(self, texture)
     }
 
     /// Calculates the 4th point of the plane as if it is a parallelogram.

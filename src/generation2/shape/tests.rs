@@ -1,9 +1,9 @@
-use vmf_parser_nom::ast::Vmf;
-
 use crate::map::Map;
 use crate::prelude::Vector3;
 use crate::vmf::{block_to_solid, ToLower};
 use crate::StrType;
+use std::borrow::Cow;
+use vmf_parser_nom::ast::Vmf;
 
 use super::*;
 
@@ -29,7 +29,7 @@ fn make_shape<'a>(
 #[test]
 #[ignore]
 fn test_frustum_cone() {
-    let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
+    let dev_person = Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C"));
     let mats = [&dev_person; 3];
     let options = &SolidOptions::default().allow_frac();
     let mut map = Map::default();
@@ -64,7 +64,7 @@ fn test_frustum_cone() {
 #[test]
 #[ignore]
 fn frustum_cone_doc_test() {
-    let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
+    let dev_person = Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C"));
     let mats = [&dev_person; 3];
     let options = &SolidOptions::default();
     let mut map = Map::default();
@@ -130,7 +130,7 @@ fn shape_test() {
     // let
     // 16x16 to 512
 
-    let dev_person = Material::new("DEV/DEV_MEASUREWALL01C");
+    let dev_person = Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C"));
     let mats = [&dev_person; 6];
 
     const CELL_SIZE: i32 = 512;
@@ -216,9 +216,9 @@ fn sphere_test() {
     let options = SolidOptions { world_align: false, ..SolidOptions::default() };
 
     let mats = [
-        &Material::new("tools/toolsnodraw"),
-        &Material::new("tools/toolsnodraw"),
-        &Material::new("DEV/DEV_MEASUREWALL01C"),
+        &Material::new(Cow::Borrowed("tools/toolsnodraw")),
+        &Material::new(Cow::Borrowed("tools/toolsnodraw")),
+        &Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C")),
     ];
     for solid in sphere(
         &Bounds::new(Vector3::new(-256.0, -256.0, 0.0), Vector3::new(256.0, 256.0, 512.0)),
@@ -253,13 +253,12 @@ fn sphere_disp_test() {
     // panic!("e");
 
     let mut map = Map::default();
-    let options = SolidOptions { world_align: false, ..SolidOptions::default() };
-    let sphere_options = SphereOptions { size: Displacement::power_to_len(3) };
+    let options = SolidOptions { world_align: false, power: 3, ..SolidOptions::default() };
 
     let mats = [
         // &Material::new("tools/toolsnodraw"),
         // &Material::new("tools/toolsnodraw"),
-        &Material::new("DEV/DEV_MEASUREWALL01C"),
+        &Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C")),
     ];
     const SIZE_X: f32 = 512.0;
     const SIZE_Y: f32 = 1024.0;
@@ -273,7 +272,6 @@ fn sphere_disp_test() {
         // &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),
         mats,
         &options,
-        &sphere_options,
     );
 
     let sphere = sphere.into_vec()[0].clone();
@@ -313,7 +311,7 @@ fn sphere_disp_test() {
                 if t == o {
                     print!("_");
                 } else {
-                    print!("{}", &"+-"[o.. o + 1]);
+                    print!("{}", &"+-"[o..o + 1]);
                 }
             }
             print!("  ");
@@ -359,13 +357,12 @@ fn test_order() {
     // panic!("e");
 
     let mut map = Map::default();
-    let options = SolidOptions { world_align: false, ..SolidOptions::default() };
-    let sphere_options = SphereOptions { size: Displacement::power_to_len(2) };
+    let options = SolidOptions { world_align: false, power: 3, ..SolidOptions::default() };
 
     let mats = [
         // &Material::new("tools/toolsnodraw"),
         // &Material::new("tools/toolsnodraw"),
-        &Material::new("DEV/DEV_MEASUREWALL01C"),
+        &Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C")),
     ];
     const SIZE: f32 = 128.0;
     let sphere = sphere_disp(
@@ -374,7 +371,6 @@ fn test_order() {
         // &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),
         mats,
         &options,
-        &sphere_options,
     );
 
     let mut sphere = sphere.into_vec()[0].clone();

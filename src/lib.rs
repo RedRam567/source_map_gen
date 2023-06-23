@@ -19,12 +19,13 @@
 // TODO: change forward axis??
 
 #![allow(clippy::bool_assert_comparison)] // like bro chill
+#![allow(clippy::needless_lifetimes)] // I dont like to ever use '_
 #![allow(clippy::zero_prefixed_literal)]
 #![warn(clippy::missing_const_for_fn)]
 #![warn(clippy::missing_safety_doc)]
-#![warn(clippy::undocumented_unsafe_blocks)]
-#![deny(rustdoc::broken_intra_doc_links)] // impossible to deny normal compile :/
 #![deny(clippy::semicolon_if_nothing_returned)]
+#![deny(clippy::undocumented_unsafe_blocks)]
+#![deny(rustdoc::broken_intra_doc_links)] // impossible to deny normal compile :/
 
 // #[deprecated]
 pub mod generation;
@@ -42,6 +43,10 @@ pub mod prelude {
     pub use crate::map::vector::*;
     pub(crate) use crate::StrType;
 }
+
+// open questions:
+// casing of valve stuff brought into Rust
+//      preserve or convert to snake?
 
 /// Fork of [`std::dbg`] but with the output not pretty printed.
 macro_rules! dbg2 {

@@ -17,8 +17,8 @@ pub const SET: usize = 7;
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SolidOptions {
     /// Number of sides of a spikes base, number of layers and number of sides
-    /// of those layers of a sphere, etc.
-    pub sides: u32,
+    /// of those layers of a sphere, power of a displacement, etc.
+    pub power: u32,
     /// Allow vertexes to have a fractional part instead of rounding to an integer.
     pub allow_frac: bool,
     /// Allow fractional vertexes if the shape is too small to accurately have
@@ -33,7 +33,7 @@ pub struct SolidOptions {
 impl SolidOptions {
     pub const fn new() -> Self {
         Self {
-            sides: 16,
+            power: 16,
             allow_frac: false,
             frac_promote: false,
             world_align: false,
@@ -41,7 +41,7 @@ impl SolidOptions {
         }
     }
     pub const fn sides(self, sides: u32) -> Self {
-        Self { sides, ..self }
+        Self { power: sides, ..self }
     }
     pub const fn allow_frac(self) -> Self {
         Self { allow_frac: true, ..self }

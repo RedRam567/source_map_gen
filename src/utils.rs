@@ -102,6 +102,7 @@ pub mod std_stabilized {
     }
 }
 
+/// TODO: remove, just return 1 shape in shape.rs
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum OneOrVec<T> {
     One(T),

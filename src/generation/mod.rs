@@ -12,32 +12,32 @@ pub const MAT_SCALE: f32 = 0.25;
 // pub const WALL_THICKNESS: f32 = 8.0;
 
 pub static DEV_EAST: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).east().build();
+    Texture::new_mat(Cow::Borrowed(MAT_DEV_WALL)).east();
 pub static DEV_WEST: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).west().build();
+    Texture::new_mat(Cow::Borrowed(MAT_DEV_WALL)).west();
 pub static DEV_NORTH: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).north().build();
+    Texture::new_mat(Cow::Borrowed(MAT_DEV_WALL)).north();
 pub static DEV_SOUTH: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_WALL)).south().build();
+    Texture::new_mat(Cow::Borrowed(MAT_DEV_WALL)).south();
 pub static DEV_TOP: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_FLOOR)).top().build();
+    Texture::new_mat(Cow::Borrowed(MAT_DEV_FLOOR)).top();
 pub static DEV_BOTTOM: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_DEV_FLOOR)).bottom().build();
+    Texture::new_mat(Cow::Borrowed(MAT_DEV_FLOOR)).bottom();
 
 pub static SKY_EAST: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).east().build();
+    Texture::new_mat(Cow::Borrowed(MAT_3D_SKY)).east();
 pub static SKY_WEST: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).west().build();
+    Texture::new_mat(Cow::Borrowed(MAT_3D_SKY)).west();
 pub static SKY_NORTH: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).north().build();
+    Texture::new_mat(Cow::Borrowed(MAT_3D_SKY)).north();
 pub static SKY_SOUTH: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).south().build();
+    Texture::new_mat(Cow::Borrowed(MAT_3D_SKY)).south();
 pub static SKY_TOP: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).top().build();
+    Texture::new_mat(Cow::Borrowed(MAT_3D_SKY)).top();
 pub static SKY_BOTTOM: Texture<'static> =
-    TextureBuilder::new_mat(Cow::Borrowed(MAT_3D_SKY)).bottom().build();
+    Texture::new_mat(Cow::Borrowed(MAT_3D_SKY)).bottom();
 
-use crate::map::{Map, Plane, Side, Solid, Texture, TextureBuilder, Vector3};
+use crate::map::{Map, Plane, Side, Solid, Texture, Vector3};
 use std::borrow::Cow;
 
 /// Bounds in 3d space.
@@ -221,12 +221,12 @@ impl<'a> Map<'a> {
     pub fn cube_str(bounds: Bounds<f32>, textures: [&str; 6]) -> Solid {
         let [top, bottom, left, right, back, front] = textures;
 
-        let top = TextureBuilder::new_mat(Cow::Borrowed(top)).top().build();
-        let bottom = TextureBuilder::new_mat(Cow::Borrowed(bottom)).bottom().build();
-        let left = TextureBuilder::new_mat(Cow::Borrowed(left)).east().build();
-        let right = TextureBuilder::new_mat(Cow::Borrowed(right)).west().build();
-        let back = TextureBuilder::new_mat(Cow::Borrowed(back)).north().build();
-        let front = TextureBuilder::new_mat(Cow::Borrowed(front)).south().build();
+        let top = Texture::new_mat(Cow::Borrowed(top)).top();
+        let bottom = Texture::new_mat(Cow::Borrowed(bottom)).bottom();
+        let left = Texture::new_mat(Cow::Borrowed(left)).east();
+        let right = Texture::new_mat(Cow::Borrowed(right)).west();
+        let back = Texture::new_mat(Cow::Borrowed(back)).north();
+        let front = Texture::new_mat(Cow::Borrowed(front)).south();
 
         let textures = [top, bottom, left, right, back, front];
         Solid::new(

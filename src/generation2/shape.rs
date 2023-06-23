@@ -435,9 +435,8 @@ pub(crate) struct SphereOptions {
     size: usize,
 }
 
-pub(crate) fn sphere_disp<'a>(
+pub fn sphere_disp<'a>(
     bounds: &Bounds, mats: [&'a Material<'a>; 1], options: &'a SolidOptions,
-    sphere_options: &SphereOptions,
 ) -> OneOrVec<Solid<'a>> {
     // squeeze bounds to cube
     // project disps to sphere
@@ -446,7 +445,8 @@ pub(crate) fn sphere_disp<'a>(
     // no, squeeze bounds coords into cube
     // unsqueeze result
 
-    let size = sphere_options.size;
+    let power = options.power;
+    let size = Displacement::power_to_len(power);
 
     let mut cube = cube(bounds, &[mats[0]; 6], options);
 
@@ -472,7 +472,7 @@ pub(crate) fn sphere_disp<'a>(
         // convert ideal and projected to dir and distances
         let mut dirs = Vec2d::new(Vec2d::strides(size));
         let mut dists = Vec2d::new(Vec2d::strides(size));
-        let alphas = Vec2d::from_parts(vec![0.0; disp.len * disp.len], Vec2d::strides(size));
+        let alphas = Vec2d::from_parts(vec![0.0; disp.width * disp.width], Vec2d::strides(size));
         for (ideal, projected) in ideal.inner.iter().zip(projected) {
             // let (mut dir, dist) = ideal.dir_and_dist(&projected);
             let (mut dir, dist) = ideal.dir_and_dist(&projected);

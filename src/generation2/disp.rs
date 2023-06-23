@@ -22,8 +22,8 @@ pub enum TriangleTag {
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Displacement {
-    // TODO: name
-    pub len: usize,
+    /// Number of points in 1 dimension
+    pub width: usize,
 
     pub plane: Plane,
     pub bottom_right: Vector3<f32>,
@@ -34,28 +34,28 @@ pub struct Displacement {
 }
 
 impl Displacement {
-    pub const fn new(corners: [Vector3<f32>; 4], size: usize) -> Self {
+    pub const fn new(corners: [Vector3<f32>; 4], width: usize) -> Self {
         // inlining corners leads to move errors O_o
         let [bl, tl, tr, br] = corners;
         Self {
-            len: size,
+            width,
             plane: Plane::new(bl, tl, tr),
             bottom_right: br,
-            normals: Vec2d::new(Vec2d::strides(size)),
-            distances: Vec2d::new(Vec2d::strides(size)),
-            alphas: Vec2d::new(Vec2d::strides(size)),
+            normals: Vec2d::new(Vec2d::strides(width)),
+            distances: Vec2d::new(Vec2d::strides(width)),
+            alphas: Vec2d::new(Vec2d::strides(width)),
         }
     }
 
-    pub fn new_plane(plane: Plane, size: usize) -> Self {
+    pub fn new_plane(plane: Plane, width: usize) -> Self {
         let bottom_right = plane.bottom_right();
         Self {
-            len: size,
+            width,
             plane,
             bottom_right,
-            normals: Vec2d::new(Vec2d::strides(size)),
-            distances: Vec2d::new(Vec2d::strides(size)),
-            alphas: Vec2d::new(Vec2d::strides(size)),
+            normals: Vec2d::new(Vec2d::strides(width)),
+            distances: Vec2d::new(Vec2d::strides(width)),
+            alphas: Vec2d::new(Vec2d::strides(width)),
         }
     }
 
@@ -95,18 +95,19 @@ impl Displacement {
     /// Lerps between `top_line` and `bottom_line`. Pushes to the [`Vec2d`] in
     /// the order left to right (width), top to bottom (height).
     pub fn ideal_points(&self) -> Vec2d<Vector3<f32>> {
-        Self::lerp4(self.corners(), self.len)
+        Self::lerp4(self.corners(), self.width)
     }
 
     // TODO:DOCS:
-    fn lerp4(points: [&Vector3<f32>; 4], len: usize) -> Vec2d<Vector3<f32>> {
+    // TODO: move to vec2d? as from_4_points?
+    fn lerp4(points: [&Vector3<f32>; 4], num_points: usize) -> Vec2d<Vector3<f32>> {
         let [bl, tl, tr, br] = points;
-        let mut points = Vec2d::with_capacity(len * len, Vec2d::strides(len));
+        let mut points = Vec2d::with_capacity(num_points * num_points, Vec2d::strides(num_points));
         // TODO: unnecessary repeated calc of top and bottom
-        for y in 0..len {
-            for x in 0..len {
+        for y in 0..num_points {
+            for x in 0..num_points {
                 // lerp horizontally
-                let max = (len - 1) as f32;
+                let max = (num_points - 1) as f32;
                 let t_x = x as f32 / max;
                 // let t_x = 1.0 - t_x; // HACK:
                 let top = tl.lerp(tr, t_x);
@@ -129,13 +130,13 @@ impl Displacement {
     /// 0,0,0
     #[inline]
     fn offsets(&self) -> Vec2d<Vector3<f32>> {
-        Vec2d::from_parts(vec![Vector3::origin(); self.len * self.len], [self.len, 1])
+        Vec2d::from_parts(vec![Vector3::origin(); self.width * self.width], [self.width, 1])
     }
 
     /// `self.plane.normal()`
     #[inline]
     fn offset_normals(&self) -> Vec2d<Vector3<f32>> {
-        Vec2d::from_parts(vec![self.plane.normal(); self.len * self.len], [self.len, 1])
+        Vec2d::from_parts(vec![self.plane.normal(); self.width * self.width], [self.width, 1])
     }
 
     // TODO: actually calculate walkablity
@@ -145,7 +146,7 @@ impl Displacement {
         // 5 -> 4x8
         // 9 -> 8x16
         // 17 -> 16x32
-        let height = self.len - 1;
+        let height = self.width - 1;
         let width = height * 2; // x2 cuz 2 trianlges in 1 square
 
         let total = width * height;
@@ -154,7 +155,8 @@ impl Displacement {
         Vec2d::from_parts(vec![value; total], [width, 1])
     }
 
-    //// -1, all allowed
+    /// All always allowed. As far as I can tell, this is only a small optimization
+    /// for two displacments of differing power to save like 5 triangles.
     #[inline]
     const fn allowed_verts() -> [i32; 10] {
         [-1; 10]
@@ -162,13 +164,13 @@ impl Displacement {
 
     pub fn into_disp_info(self) -> DispInfo {
         DispInfo {
-            // annoying move errors solved by order
+            // annoying move errors solved by order O_o
             offsets: self.offsets(),
             offset_normals: self.offset_normals(),
             triangle_tags: self.triangle_tags(),
             allowed_verts: Self::allowed_verts(),
 
-            power: Displacement::len_to_power(self.len),
+            power: Displacement::len_to_power(self.width),
             start_position: self.plane.bottom_left,
             flags: DispInfo::NO_FLAGS,
             elevation: 0.0,
@@ -186,7 +188,7 @@ impl Displacement {
         let distances = disp_info.distances;
         let alphas = disp_info.alphas;
 
-        Self { len, plane, bottom_right, normals, distances, alphas }
+        Self { width: len, plane, bottom_right, normals, distances, alphas }
     }
 
     // fn project_unit_cube_to_sphere(&mut self) {
@@ -302,7 +304,7 @@ mod tests {
         };
 
         let input = Displacement {
-            len: 2,
+            width: 2,
             plane: Plane::new(
                 Vector3::new(0.0, 0.0, 0.0),
                 Vector3::new(0.0, 0.0, 16.0),

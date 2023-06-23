@@ -3,7 +3,7 @@
 use derive_ops::*;
 use std::{fmt::Display, ops::Neg};
 
-/// One of 3 axes, X, Y, Z.
+/// X, Y, or Z
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Axis3 {
     X,
@@ -12,6 +12,7 @@ pub enum Axis3 {
 }
 
 // TODO:DOCS: TODO:LOC:
+/// Pitch, yaw, roll
 #[derive(Clone, Default, Debug, PartialEq, PartialOrd)]
 pub struct Angles {
     /// +down/-up, degrees.
@@ -28,7 +29,7 @@ impl Display for Angles {
     }
 }
 
-/// A point, direction, or translation in 3d space.
+/// A point, direction, or translation in 3d space
 #[derive(AddRef, SubRef, MulRef, DivRef)]
 #[derive(AddAssignRef, SubAssignRef, MulAssignRef, DivAssignRef)]
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -187,7 +188,7 @@ impl<T: Neg<Output = T>> Neg for Vector3<T> {
     }
 }
 
-/// A point, direction, or translation in 2d space.
+/// A point, direction, or translation in 2d space
 #[derive(AddRef, SubRef, MulRef, DivRef)]
 #[derive(AddAssignRef, SubAssignRef, MulAssignRef, DivAssignRef)]
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
