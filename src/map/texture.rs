@@ -176,33 +176,33 @@ impl<'a> Texture<'a> {
         [east, west, north, south, top, bottom]
     }
 
-    /// Set the uvmap to the default for a side facing east, +X.
+    /// Set the uvmap for a side facing east, +X.
     pub const fn east(mut self) -> Self {
         self.uaxis = UVAxis::default_east().0;
         self.vaxis = UVAxis::default_east().1;
         self
     }
-    /// Set the uvmap to the default for a side facing west, -X.
+    /// Set the uvmap for a side facing west, -X.
     pub const fn west(self) -> Self {
         self.east()
     }
-    /// Set the uvmap to the default for a side facing north, +Y.
+    /// Set the uvmap for a side facing north, +Y.
     pub const fn north(mut self) -> Self {
         self.uaxis = UVAxis::default_north().0;
         self.vaxis = UVAxis::default_north().1;
         self
     }
-    /// Set the uvmap to the default for a side facing south -Y.
+    /// Set the uvmap for a side facing south, -Y.
     pub const fn south(self) -> Self {
         self.north()
     }
-    /// Set the uvmap to the default for a side facing upwards +Z.
+    /// Set the uvmap for a side facing upwards, +Z.
     pub const fn top(mut self) -> Self {
         self.uaxis = UVAxis::default_top().0;
         self.vaxis = UVAxis::default_top().1;
         self
     }
-    /// Set the uvmap to the default for a side facing downwards -Z.
+    /// Set the uvmap for a side facing downwards, -Z.
     pub const fn bottom(self) -> Self {
         self.top()
     }

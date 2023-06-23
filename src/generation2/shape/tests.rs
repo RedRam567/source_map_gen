@@ -147,7 +147,7 @@ fn shape_test() {
 
     let mut x = -1;
     let mut y = -1;
-    let mut z = -1;
+    let mut z;
 
     // TODO: FIXME: REMEMBER TO ADD BACK SPHERE CAPS
     // TODO: align ignore pos

@@ -1,3 +1,5 @@
+//! A WIP map generator and library for Source Engine games
+//!
 //! # Info
 //!
 //! In this libray, the 3d coordinate grid is right handed Z up. +X is right, +Y is forward, +Z is up.
@@ -11,12 +13,10 @@
 //! - West, Left face: The direction or face closest to -X.
 //! - North, Front face: The direction or face closest to +Y.
 //! - South, Back face: The direction or face closest to -Y.
-//! - Top face: The direction or face closest to +Z.
-//! - Bottom face: The direction or face closest to -Z.
-//! - Width how long on the X axis.
-//! - Length how long on the Y axis.
-//! - Height how long on the Z axis.
+//! - Upwards, Top face: The direction or face closest to +Z.
+//! - Downwards, Bottom face: The direction or face closest to -Z.
 // TODO: change forward axis??
+// no? I think I want north +Y, East +X, forward +X
 
 #![allow(clippy::bool_assert_comparison)] // like bro chill
 #![allow(clippy::needless_lifetimes)] // I dont like to ever use '_
@@ -33,8 +33,8 @@ pub mod generation2;
 pub mod light;
 pub mod map;
 pub mod source;
-pub mod vmf;
 pub(crate) mod utils;
+pub mod vmf;
 // pub mod scripting;
 
 pub mod prelude {

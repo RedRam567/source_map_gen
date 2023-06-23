@@ -445,7 +445,16 @@ pub fn sphere_disp<'a>(
     // no, squeeze bounds coords into cube
     // unsqueeze result
 
-    let power = options.power;
+    let mut power = options.power;
+    if power < 2 {
+        // NOTE: hammer seems to support power 1 displacements O_O
+        // bsp seems to definitely not support it
+        eprintln!("[sphere_disp()] power clamped to 2");
+        power = 1;
+    } else if power > 4 {
+        eprintln!("[sphere_disp()] power clamped to 4");
+        power = 4;
+    };
     let size = Displacement::power_to_len(power);
 
     let mut cube = cube(bounds, &[mats[0]; 6], options);

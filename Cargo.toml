@@ -1,9 +1,16 @@
 [package]
-name = "proc_gen2"
+name = "source_map_gen"
 version = "0.1.0"
+authors = ["RedRam"]
+description = "A WIP map generator and library for Source Engine games"
+# license = "TBA"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+pallet = ["dep:rayon", "dep:walkdir"]
+default = ["pallet"]
 
 [dependencies]
 derive_ops = { path = "../derive_ops" }
@@ -31,5 +38,13 @@ chrono = "0.4.24"
 # kiss3d = "0.35"
 # console_error_panic_hook = "0.1"
 
+# pallet stuff:
+rayon = { version = "1", optional = true }
+walkdir = { version = "2.3", optional = true }
+
 [dev-dependencies]
 approx = "0.5"
+
+# pallet stuff:
+lazy_static = "1.4.0"
+const_format = "0.2.30"

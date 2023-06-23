@@ -1,7 +1,22 @@
-use proc_gen2::generation::{region::Room, Bounds};
-use proc_gen2::map::{Map, Vector3};
+use source_map_gen::generation::{region::Room, Bounds};
+use source_map_gen::map::{Map, Vector3};
+use source_map_gen::vmf::ToLower;
+
+// Test everything
+// cargo test && cargo test --bins --features=pallet
+#[cfg(feature = "pallet")]
+pub(crate) mod pallet;
 
 fn main() {
+    // run with: `cargo test --bins --features=pallet`
+    #[cfg(feature = "pallet")]
+    pallet::main();
+
+    #[cfg(not(feature = "pallet"))]
+    hello_world();
+}
+
+fn hello_world() {
     let _map = Map::default();
     // let bounds = Bounds::new(Vector3::new(-128.0, -192.0, -128.0), Vector3::new(384f32, 320.0, -64.0));
     // let cube = Map::cube_dev1(bounds);
@@ -17,18 +32,8 @@ fn main() {
         max: Vector3::new(5120.0, 5120.0, 5120.0),
     });
     room.construct(&mut map);
-
-    // let mut state = IdInfo::default();
-    // let vmf = map.to_vmf(&mut state);
-    // println!("{vmf}");
-
-    // let vmf = vmf_parser_nom::parse::<&str, ()>("abc123").unwrap();
-
-    // let engine = Engine::new();
-    // let mut input = String::new();
-    // std::io::stdin().read_to_string(&mut input).unwrap();
-    // let output = engine.eval::<Dynamic>(&input).unwrap();
-    // eprintln!("{output}");
+    let vmf = map.to_lower();
+    println!("{vmf}");
 }
 
 // // extern crate kiss3d;
