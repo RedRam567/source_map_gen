@@ -5,8 +5,6 @@ use crate::prelude::*;
 use std::ops::{Deref, DerefMut};
 use std::{borrow::Cow, fmt::Display};
 
-pub const NO_DRAW: Material<'static> = Material::new(Cow::Borrowed("tools/toolsnodraw"));
-
 // TODO:FEATURE: allow relative xyz
 // TODO:DOCS: use shape link
 /// A [`Texture`] not associated with a [`Side`].

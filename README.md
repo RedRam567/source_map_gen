@@ -10,6 +10,9 @@ A WIP map generator for Source Engine games.
 Pretty much everything is subject to change.
 Some paths in test modules are hard coded to my fs and assume l4d2 and tf2 are installed.
 Currently no procedural generation.
+I hope it get it generic enough to work in any source game or even other games.
+And have it generate the whole map and all the decorations and maybe even
+navmesh.
 
 # Current Features:
 

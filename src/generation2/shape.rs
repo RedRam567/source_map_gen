@@ -1,10 +1,10 @@
 #![allow(clippy::print_literal)] // false positive for file!()
 
-mod old;
+// mod old;
 
 use super::*;
 use crate::generation2::disp::Displacement;
-use crate::prelude::{Material, Side, Solid, Vector2};
+use crate::prelude::{Material, Side, Solid};
 use crate::utils::Vec2d;
 use crate::utils::{IterWithNext, OneOrVec};
 
@@ -28,46 +28,15 @@ fn clamp_promote(radius: f32, sides: &mut u32, options: &SolidOptions) -> bool {
     changed
 }
 
-/// Returns an iterator to points on an ellipse starting north (+Y) and heading
-/// east (+X, right, closewise) which is the same order Hammer seems to use.
-/// All math is done internally as `f64` as an (in)sanity check.
-///
-/// See also <https://en.wikipedia.org/wiki/Ellipse>
-fn ellipse_verts_2d(
-    center: Vector2<f32>, x_radius: f32, y_radius: f32, mut num_sides: u32, options: &SolidOptions,
-) -> impl ExactSizeIterator<Item = Vector2<f32>> + Clone {
-    assert!(x_radius > 0.0 && y_radius > 0.0, "cannot make ellipse of zero radius");
-    // clamp for too small for sides and sides < 3
-    let changed = clamp_promote((x_radius).min(y_radius), &mut num_sides, options);
-    if changed {
-        eprintln!("[{}:{}] Warning Ellipse: Sides clamped to {}. Colinear ellipse points, too small/too many sides. Ellipse(x:{:.1},y:{:.1})",
-                file!(), line!(), num_sides, x_radius, y_radius);
-    }
-
-    // relative to north, right/clockwise(east)
-    // RangeInclusive<u32> doesnt impl ExactSizeIterator BUT Range<u32> does
-    // BUT neither range impl for 64/128 ints WTF???
-    // https://doc.rust-lang.org/std/iter/trait.ExactSizeIterator.html#implementors
-    let allow_frac = options.allow_frac;
-    let delta_angle = std::f64::consts::TAU / num_sides as f64;
-    (0..num_sides).map(move |n| {
-        let angle = delta_angle * (n + 1) as f64;
-        let x = x_radius as f64 * -angle.cos() + center.x as f64;
-        let y = y_radius as f64 * angle.sin() + center.y as f64;
-        // Vector2::new(x as f32, y as f32)
-        Vector2::new_with_round(x as f32, y as f32, allow_frac)
-    })
-}
-
 // TODO: twisted circles and expand to bounds (circle with flat faces on aabb)
 pub fn ellipse_verts(
-    center: Vector3<f32>, x_radius: f32, y_radius: f32, mut num_sides: u32, options: &SolidOptions,
+    center: Vector3<f32>, x_radius: f32, y_radius: f32, mut sides: u32, options: &SolidOptions,
 ) -> impl ExactSizeIterator<Item = Vector3<f32>> + Clone {
     // clamp for too small for sides and sides < 3
-    let changed = clamp_promote((x_radius).min(y_radius), &mut num_sides, options);
+    let changed = clamp_promote((x_radius).min(y_radius), &mut sides, options);
     if changed {
         eprintln!("[{}:{}] Warning Ellipse: Sides clamped to {}. Colinear ellipse points, too small/too many sides. Ellipse(x:{:.1},y:{:.1})",
-                file!(), line!(), num_sides, x_radius, y_radius);
+                file!(), line!(), sides, x_radius, y_radius);
     }
 
     // relative to north, right/clockwise(east)
@@ -75,8 +44,8 @@ pub fn ellipse_verts(
     // BUT neither range impl for 64/128 ints WTF???
     // https://doc.rust-lang.org/std/iter/trait.ExactSizeIterator.html#implementors
     let allow_frac = options.allow_frac;
-    let delta_angle = std::f64::consts::TAU / num_sides as f64;
-    (0..num_sides).map(move |n| {
+    let delta_angle = std::f64::consts::TAU / sides as f64;
+    (0..sides).map(move |n| {
         let angle = delta_angle * (n + 1) as f64;
         let x = x_radius as f64 * -angle.cos() + center.x as f64;
         let y = y_radius as f64 * angle.sin() + center.y as f64;
@@ -360,7 +329,7 @@ pub fn cylinder<'a>(
 /// - Also shares limitations of [`spike()`], [`cylinder()`], and [`prism()`].
 /// - FIXME: breaks if sphere is too small and [`ellipse_verts`] clamps number of
 ///     bases for top and bottom cones. `allow_frac` or `frac_promote` fixes this
-pub fn sphere<'a>(
+pub fn sphere_globe<'a>(
     bounds: &Bounds, sides: u32, mats: [&'a Material<'a>; 3], options: &'a SolidOptions,
 ) -> OneOrVec<Solid<'a>> {
     let x_radius = bounds.x_len() / 2.0;
@@ -430,13 +399,8 @@ fn radius_at_sphere_height(radius: f32, height_from_center: f32, allow_frac: boo
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash)]
-pub(crate) struct SphereOptions {
-    size: usize,
-}
-
-pub fn sphere_disp<'a>(
-    bounds: &Bounds, mats: [&'a Material<'a>; 1], options: &'a SolidOptions,
+pub fn sphere<'a>(
+    bounds: &Bounds, mut power: u32, mats: [&'a Material<'a>; 1], options: &'a SolidOptions,
 ) -> OneOrVec<Solid<'a>> {
     // squeeze bounds to cube
     // project disps to sphere
@@ -445,7 +409,6 @@ pub fn sphere_disp<'a>(
     // no, squeeze bounds coords into cube
     // unsqueeze result
 
-    let mut power = options.power;
     if power < 2 {
         // NOTE: hammer seems to support power 1 displacements O_O
         // bsp seems to definitely not support it
@@ -460,8 +423,7 @@ pub fn sphere_disp<'a>(
     let mut cube = cube(bounds, &[mats[0]; 6], options);
 
     for side in cube.sides.iter_mut() {
-        // eprintln!();
-        // project points to sphere
+        // Project points on cube to sphere
         let mut disp = Displacement::new_plane(side.plane.clone(), size);
         let ideal = disp.ideal_points();
         let projected = ideal.inner.iter().map(|p| {

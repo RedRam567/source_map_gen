@@ -69,6 +69,7 @@ impl Displacement {
         [bottom_left, top_left, top_right, bottom_right]
     }
 
+    // TODO: fix nameing, size vs width vs len vs num points in 1 axis
     /// Get number of verts in one dimension.
     /// Squared is the total number of verts for the whole [`Displacement`].
     #[inline]
@@ -91,6 +92,7 @@ impl Displacement {
         }
     }
 
+    // TODO: rename to reference? default?
     // TODO:FIXME:TODO:DOCS: FIX ORDER / DOCS, BOTTOM RIGHT, to top right, then left
     /// Lerps between `top_line` and `bottom_line`. Pushes to the [`Vec2d`] in
     /// the order left to right (width), top to bottom (height).

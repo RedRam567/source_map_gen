@@ -17,7 +17,6 @@ fn main() {
 }
 
 fn hello_world() {
-    let _map = Map::default();
     // let bounds = Bounds::new(Vector3::new(-128.0, -192.0, -128.0), Vector3::new(384f32, 320.0, -64.0));
     // let cube = Map::cube_dev1(bounds);
     // map.add_solid(cube);

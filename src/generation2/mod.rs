@@ -12,13 +12,15 @@ pub const NWT: usize = 5;
 pub const NET: usize = 6;
 pub const SET: usize = 7;
 
+// translate and scale and transform trait
+
 // upgrade to frac if too small?
 // TODO: top offset and top size or smth
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SolidOptions {
-    /// Number of sides of a spikes base, number of layers and number of sides
-    /// of those layers of a sphere, power of a displacement, etc.
-    pub power: u32,
+    // /// Number of sides of a spikes base, number of layers and number of sides
+    // /// of those layers of a sphere, power of a displacement, etc.
+    // pub power: u32,
     /// Allow vertexes to have a fractional part instead of rounding to an integer.
     pub allow_frac: bool,
     /// Allow fractional vertexes if the shape is too small to accurately have
@@ -33,16 +35,16 @@ pub struct SolidOptions {
 impl SolidOptions {
     pub const fn new() -> Self {
         Self {
-            power: 16,
+            // power: 16,
             allow_frac: false,
             frac_promote: false,
             world_align: false,
             // grouping: Grouping::Auto,
         }
     }
-    pub const fn sides(self, sides: u32) -> Self {
-        Self { power: sides, ..self }
-    }
+    // pub const fn sides(self, sides: u32) -> Self {
+    //     Self { power: sides, ..self }
+    // }
     pub const fn allow_frac(self) -> Self {
         Self { allow_frac: true, ..self }
     }
@@ -106,56 +108,51 @@ impl Bounds {
         ]
     }
 
-    /// The center of `self` on the XY plane.
+    /// The center of `self` on the XY plane
     pub fn center_xy(&self) -> Vector2<f32> {
         let x = (self.min.x + self.max.x) / 2.0;
         let y = (self.min.y + self.max.y) / 2.0;
         Vector2::new(x, y)
     }
-
-    /// The center of `self` on the XY plane.
+    /// The center of `self` on the XY plane
     pub fn center_yz(&self) -> Vector2<f32> {
         let y = (self.min.y + self.max.y) / 2.0;
         let z = (self.min.z + self.max.z) / 2.0;
         Vector2::new(y, z)
     }
-
-    /// The center of `self` on the XY plane.
+    /// The center of `self` on the XY plane
     pub fn center_xz(&self) -> Vector2<f32> {
         let x = (self.min.x + self.max.x) / 2.0;
         let z = (self.min.z + self.max.z) / 2.0;
         Vector2::new(x, z)
     }
-
     pub fn center(&self) -> Vector3<f32> {
         let x = (self.min.x + self.max.x) / 2.0;
         let y = (self.min.y + self.max.y) / 2.0;
         let z = (self.min.z + self.max.z) / 2.0;
         Vector3::new(x, y, z)
     }
-
     pub fn top_center(&self) -> Vector3<f32> {
         let x = (self.min.x + self.max.x) / 2.0;
         let y = (self.min.y + self.max.y) / 2.0;
         let z = self.max.x;
         Vector3::new(x, y, z)
     }
-
     pub fn bottom_center(&self) -> Vector3<f32> {
         let x = (self.min.x + self.max.x) / 2.0;
         let y = (self.min.y + self.max.y) / 2.0;
         let z = self.min.x;
         Vector3::new(x, y, z)
     }
-
+    /// Length in the X axis
     pub fn x_len(&self) -> f32 {
         (self.min.x - self.max.x).abs()
     }
-
+    /// Length in the Y axis
     pub fn y_len(&self) -> f32 {
         (self.min.y - self.max.y).abs()
     }
-
+    /// Length in the Z axis
     pub fn z_len(&self) -> f32 {
         (self.min.z - self.max.z).abs()
     }

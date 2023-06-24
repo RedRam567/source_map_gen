@@ -220,7 +220,7 @@ fn sphere_test() {
         &Material::new(Cow::Borrowed("tools/toolsnodraw")),
         &Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C")),
     ];
-    for solid in sphere(
+    for solid in sphere_globe(
         &Bounds::new(Vector3::new(-256.0, -256.0, 0.0), Vector3::new(256.0, 256.0, 512.0)),
         // &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),
         8,
@@ -253,7 +253,7 @@ fn sphere_disp_test() {
     // panic!("e");
 
     let mut map = Map::default();
-    let options = SolidOptions { world_align: false, power: 3, ..SolidOptions::default() };
+    let options = SolidOptions { world_align: false, ..SolidOptions::default() };
 
     let mats = [
         // &Material::new("tools/toolsnodraw"),
@@ -266,10 +266,11 @@ fn sphere_disp_test() {
     // const SIZE_X: f32 = 128.0;
     // const SIZE_Y: f32 = 128.0;
     // const SIZE_Z: f32 = 128.0;
-    let sphere = sphere_disp(
+    let sphere = sphere(
         // &Bounds::new(Vector3::new(-256.0, -256.0, -256.0), Vector3::new(256.0, 256.0, 256.0)),
         &Bounds::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(SIZE_X, SIZE_Y, SIZE_Z)),
         // &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),
+        4,
         mats,
         &options,
     );
@@ -357,7 +358,7 @@ fn test_order() {
     // panic!("e");
 
     let mut map = Map::default();
-    let options = SolidOptions { world_align: false, power: 3, ..SolidOptions::default() };
+    let options = SolidOptions { world_align: false, ..SolidOptions::default() };
 
     let mats = [
         // &Material::new("tools/toolsnodraw"),
@@ -365,9 +366,10 @@ fn test_order() {
         &Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C")),
     ];
     const SIZE: f32 = 128.0;
-    let sphere = sphere_disp(
+    let sphere = sphere(
         // &Bounds::new(Vector3::new(-256.0, -256.0, -256.0), Vector3::new(256.0, 256.0, 256.0)),
         &Bounds::new(Vector3::new(-SIZE, -SIZE, -SIZE), Vector3::new(SIZE, SIZE, SIZE)),
+        3,
         // &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),
         mats,
         &options,
