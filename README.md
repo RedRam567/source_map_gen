@@ -1,7 +1,7 @@
 # source_map_gen
 
 [![Crates.io](https://img.shields.io/crates/v/source_map_gen)](https://crates.io/crates/source_map_gen)
-[![docs.rs](https://img.shields.io/docsrs/source_map_gen)](https://docs.rs/vmf_parser_nom/latest/source_map_gen)
+[![docs.rs](https://img.shields.io/docsrs/source_map_gen)](https://docs.rs/source_map_gen/0.1.0/source_map_gen)
 
 A WIP map generator for Source Engine games.
 
