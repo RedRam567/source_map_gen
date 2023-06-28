@@ -1,7 +1,8 @@
-pub mod shape;
 pub mod disp;
+pub mod shape;
 
 use crate::prelude::{Plane, Vector2, Vector3};
+use std::ops::Range;
 
 pub const SWB: usize = 0;
 pub const NWB: usize = 1;
@@ -89,6 +90,41 @@ impl Bounds {
         }
     }
 
+    pub fn map_point<F>(&self, point: Vector3<f32>, mut f: F) -> Vector3<f32>
+    where
+        F: FnMut(&Self, Vector3<f32>) -> Vector3<f32>,
+    {
+        f(self, point)
+    }
+
+    pub fn translate(mut self, trans: &Vector3<f32>) -> Self {
+        self.translate_mut(trans);
+        self
+    }
+    pub fn translate_mut(&mut self, trans: &Vector3<f32>) -> &mut Self {
+        self.min += trans;
+        self.max += trans;
+        self
+    }
+
+    /// Scale a point in a bounds to a unit vector (-1..=1 on all axes).
+    fn point_to_unit(&self, point: &Vector3<f32>) -> Vector3<f32> {
+        let x = remap(point.x, self.x_range(), -1f32..1f32);
+        let y = remap(point.y, self.y_range(), -1f32..1f32);
+        let z = remap(point.z, self.z_range(), -1f32..1f32);
+
+        Vector3::new(x, y, z)
+    }
+
+    /// Scale a unit vector (-1..=1 on all axes) to bounds coords.
+    fn unit_to_point(&self, unit: &Vector3<f32>) -> Vector3<f32> {
+        let x = remap(unit.x, -1f32..1f32, self.x_range());
+        let y = remap(unit.y, -1f32..1f32, self.y_range());
+        let z = remap(unit.z, -1f32..1f32, self.z_range());
+
+        Vector3::new(x, y, z)
+    }
+
     /// Returns the 8 vertexes of the [`Bounds`] in the order:
     ///
     /// `west south bottom`, `west north bottom`, `east north bottom`, `east south bottom`
@@ -108,6 +144,27 @@ impl Bounds {
         ]
     }
 
+    pub const fn x_range(&self) -> Range<f32> {
+        self.min.x..self.max.x
+    }
+    pub const fn y_range(&self) -> Range<f32> {
+        self.min.y..self.max.y
+    }
+    pub const fn z_range(&self) -> Range<f32> {
+        self.min.z..self.max.z
+    }
+    /// Length in the X axis
+    pub fn x_len(&self) -> f32 {
+        (self.min.x - self.max.x).abs()
+    }
+    /// Length in the Y axis
+    pub fn y_len(&self) -> f32 {
+        (self.min.y - self.max.y).abs()
+    }
+    /// Length in the Z axis
+    pub fn z_len(&self) -> f32 {
+        (self.min.z - self.max.z).abs()
+    }
     /// The center of `self` on the XY plane
     pub fn center_xy(&self) -> Vector2<f32> {
         let x = (self.min.x + self.max.x) / 2.0;
@@ -144,19 +201,6 @@ impl Bounds {
         let z = self.min.x;
         Vector3::new(x, y, z)
     }
-    /// Length in the X axis
-    pub fn x_len(&self) -> f32 {
-        (self.min.x - self.max.x).abs()
-    }
-    /// Length in the Y axis
-    pub fn y_len(&self) -> f32 {
-        (self.min.y - self.max.y).abs()
-    }
-    /// Length in the Z axis
-    pub fn z_len(&self) -> f32 {
-        (self.min.z - self.max.z).abs()
-    }
-
     pub const fn top_plane(&self) -> Plane {
         // 7 6 5
         Plane::new(
@@ -165,7 +209,6 @@ impl Bounds {
             Vector3 { y: self.min.y, ..self.max },
         )
     }
-
     pub const fn bottom_plane(&self) -> Plane {
         // 2, 1, 0
         Plane::new(
@@ -174,15 +217,19 @@ impl Bounds {
             Vector3 { ..self.min },
         )
     }
+}
 
-    pub fn translate(mut self, trans: &Vector3<f32>) -> Self {
-        self.translate_mut(trans);
-        self
-    }
+// prob slower than specialized unit to multiplier fn, idc
+// how many times are you gonna make like 10,000 spheres anyways?
 
-    pub fn translate_mut(&mut self, trans: &Vector3<f32>) -> &mut Self {
-        self.min += trans;
-        self.max += trans;
-        self
-    }
+/// Remap the `value` from the range `from_range` to the range `to_range`,
+/// linearly scaling
+///
+/// # Notes
+/// No special behavior for backwards ranges.
+/// Empty ranges dont work.
+fn remap(value: f32, from_range: Range<f32>, to_range: Range<f32>) -> f32 {
+    let to_diff = to_range.end - to_range.start;
+    let from_diff = from_range.end - from_range.start;
+    (value - from_range.start) * (to_diff) / (from_diff) + to_range.start
 }

@@ -94,6 +94,7 @@ impl Displacement {
 
     // TODO: rename to reference? default?
     // TODO:FIXME:TODO:DOCS: FIX ORDER / DOCS, BOTTOM RIGHT, to top right, then left
+    /// The "default", untranslated position of points on a [`Displacement`]
     /// Lerps between `top_line` and `bottom_line`. Pushes to the [`Vec2d`] in
     /// the order left to right (width), top to bottom (height).
     pub fn ideal_points(&self) -> Vec2d<Vector3<f32>> {
@@ -221,15 +222,19 @@ pub(crate) fn lerp(a: f32, b: f32, t: f32) -> f32 {
     (1.0 - t) * a + t * b
 }
 
-// transform to and from cube? into rect prism/ellipse?
-pub(crate) fn project_unit_cube_to_sphere(point: &Vector3<f32>) -> Vector3<f32> {
+/// Project a point on a unit cube (-1 to 1) a point on a unit sphere.
+/// 
+/// See also: <http://mathproofs.blogspot.com/2005/07/mapping-cube-to-sphere.html>
+pub(crate) fn project_cube_to_sphere(point: &Vector3<f32>) -> Vector3<f32> {
     let Vector3 { x, y, z } = point;
     let x_2 = x * x;
     let y_2 = y * y;
     let z_2 = z * z;
-    // // hmm, doesnt seem to be in "simplest form" see also these on wolfram alpha
-    // // x * sqrt(1 - y^2/2 - z^2/2 + y^2*z^2/3)
-    // // (x * sqrt(6 * (y^2*(2*z^2-3)-3*(z^2-2)))/6 // from TI-92+ lol
+    
+    // x * sqrt(1 - y^2/2 - z^2/2 + y^2*z^2/3)
+    // x * sqrt(1 - (y^2 - z^2)/2 + y^2*z^2/3)
+    // (x * sqrt(6 * (y^2*(2*z^2-3)-3*(z^2-2)))/6 // from TI-92+ lol
+
     Vector3 {
         x: x * f32::sqrt(1.0 - (y_2 / 2.0) - (z_2 / 2.0) + (y_2 * z_2) / 3.0),
         y: y * f32::sqrt(1.0 - (z_2 / 2.0) - (x_2 / 2.0) + (z_2 * x_2) / 3.0),
@@ -246,9 +251,7 @@ impl Vector3<f32> {
             z: lerp(self.z, other.z, t),
         }
     }
-}
 
-impl Vector3<f32> {
     /// Returns a unit vector that points from `self` to `other`,
     /// and a distance along that vector where `other` is.
     pub fn dir_and_dist(&self, other: &Self) -> (Vector3<f32>, f32) {

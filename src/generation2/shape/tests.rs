@@ -10,13 +10,13 @@ use super::*;
 fn make_shape<'a>(
     shape: &str, bounds: &Bounds, sides: u32, mats: [&'a Material<'a>; 6],
     options: &'a SolidOptions,
-) -> OneOrVec<Solid<'a>> {
+) -> Solid<'a> {
     // TODO: horrible
     // let spike_bounds = &Bounds {max: Vector3 {z: bounds.max.z / 2.0, ..bounds.max }, ..bounds.clone()};
     let spike_bounds = &bounds;
     match shape {
-        "cube" => OneOrVec::One(cube(bounds, mats[..].try_into().unwrap(), options)),
-        "wedge" => OneOrVec::One(wedge(bounds, mats[..].try_into().unwrap(), options)),
+        "cube" => cube(bounds, mats[..].try_into().unwrap(), options),
+        "wedge" => wedge(bounds, mats[..].try_into().unwrap(), options),
         "spike" => spike(spike_bounds, sides, mats[..].try_into().unwrap(), options),
         "cylinder" => cylinder(bounds, sides, mats[..].try_into().unwrap(), options),
         // "frustum" => frustum(bounds, sides, mats[..].try_into().unwrap(), options),
@@ -166,7 +166,7 @@ fn shape_test() {
                 let bounds = Bounds::new(min, max);
                 // map.add_solid(cube(&bounds, mats, &options));
                 // map.add_solid(wedge(&bounds, mats[..].try_into().unwrap(), &options));
-                map.add_solid2(make_shape(shape, &bounds, num_sides, mats, &options));
+                map.add_solid(make_shape(shape, &bounds, num_sides, mats, &options));
             }
             x += CELL_SIZE * 2;
         }
@@ -220,15 +220,14 @@ fn sphere_test() {
         &Material::new(Cow::Borrowed("tools/toolsnodraw")),
         &Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C")),
     ];
-    for solid in sphere_globe(
+    let sphere = sphere_globe(
         &Bounds::new(Vector3::new(-256.0, -256.0, 0.0), Vector3::new(256.0, 256.0, 512.0)),
         // &Bounds::new(Vector3::new(-2560.0, -2560.0, 0.0), Vector3::new(2560.0, 2560.0, 5120.0)),
         8,
         mats,
         &options,
-    )
-    .into_vec()
-    {
+    );
+    for solid in sphere {
         map.add_solid(solid);
     }
 
@@ -274,8 +273,6 @@ fn sphere_disp_test() {
         mats,
         &options,
     );
-
-    let sphere = sphere.into_vec()[0].clone();
 
     map.add_solid(sphere.clone());
 
@@ -366,7 +363,7 @@ fn test_order() {
         &Material::new(Cow::Borrowed("DEV/DEV_MEASUREWALL01C")),
     ];
     const SIZE: f32 = 128.0;
-    let sphere = sphere(
+    let mut sphere = sphere(
         // &Bounds::new(Vector3::new(-256.0, -256.0, -256.0), Vector3::new(256.0, 256.0, 256.0)),
         &Bounds::new(Vector3::new(-SIZE, -SIZE, -SIZE), Vector3::new(SIZE, SIZE, SIZE)),
         3,
@@ -374,8 +371,6 @@ fn test_order() {
         mats,
         &options,
     );
-
-    let mut sphere = sphere.into_vec()[0].clone();
 
     for side in sphere.sides.iter_mut() {
         // dbg!(&(side.disp.as_ref()).unwrap().plane);

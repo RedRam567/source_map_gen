@@ -1,12 +1,10 @@
-#![allow(clippy::print_literal)] // false positive for file!()
-
 // mod old;
 
 use super::*;
-use crate::generation2::disp::Displacement;
+use crate::generation2::disp::{project_cube_to_sphere, Displacement};
 use crate::prelude::{Material, Side, Solid};
+use crate::utils::IterWithNext;
 use crate::utils::Vec2d;
-use crate::utils::{IterWithNext, OneOrVec};
 
 // TODO: solid transform
 
@@ -284,7 +282,7 @@ pub fn wedge<'a>(bounds: &Bounds, materials: &[&Material<'a>; 5], options: &Soli
 #[doc(alias = "cone")]
 pub fn spike<'a>(
     bounds: &Bounds, sides: u32, mats: [&'a Material<'a>; 2], options: &'a SolidOptions,
-) -> OneOrVec<Solid<'a>> {
+) -> Solid<'a> {
     let x_radius = bounds.x_len() / 2.0;
     let y_radius = bounds.y_len() / 2.0;
     let top_points = std::iter::repeat(bounds.top_center());
@@ -294,7 +292,7 @@ pub fn spike<'a>(
     // lifetime problems with reference to this new array
     let mats = [mats[0], mats[0], mats[1]];
     // all the work is done here
-    OneOrVec::One(Solid::new(prism(top_points, bottom_points, false, mats, options).collect()))
+    Solid::new(prism(top_points, bottom_points, false, mats, options).collect())
 }
 /// A cylinder. two bases connected with planes. A simple wrapper around [`prism()`].
 /// `mats` are the materials in the order: top, bottom, sides.
@@ -304,25 +302,26 @@ pub fn spike<'a>(
 // TODO: 63 also seems to work (in sphere)??????
 pub fn cylinder<'a>(
     bounds: &Bounds, sides: u32, mats: [&'a Material<'a>; 3], options: &'a SolidOptions,
-) -> OneOrVec<Solid<'a>> {
+) -> Solid<'a> {
     let x_radius = bounds.x_len() / 2.0;
     let y_radius = bounds.y_len() / 2.0;
     let top_points = ellipse_verts(bounds.top_center(), x_radius, y_radius, sides, options);
     let bottom_points = ellipse_verts(bounds.bottom_center(), x_radius, y_radius, sides, options);
 
-    // NOTE: prefer_top shouldn't matter as its all nice
-    OneOrVec::One(Solid::new(prism(top_points, bottom_points, false, mats, options).collect()))
+    // NOTE: prefer_top in solid_options shouldn't matter as its all nice geometry
+    Solid::new(prism(top_points, bottom_points, false, mats, options).collect())
 }
 
 // TODO: layer sides and side sides for nice square faces sphere
 // TODO:FEATURE: add prism support for len and len*2 iters for nice caps in Hammer
 // https://en.wikipedia.org/wiki/Square_antiprism
-/// A sphere with topology similar to a globe. Made of layers of frustums with
-/// caps of cones.
+/// A sphere with topology similar to a globe.
 ///
+/// Made of layers of frustums with with top and bottom being cones.
 /// `mats` are the materials in the order: top insides, bottom insides, sides
 ///
 /// # Notes
+/// - [`sphere()`] is recomended over this.
 /// - Recomened max sides is 8 else the top and bottom cones start to have problems
 ///     rendering in Hammer (vbsp seems fine tho).
 /// - Max sides is ~120 for Hammer and 62 for vbsp. TODO: why does 63 work?
@@ -331,7 +330,7 @@ pub fn cylinder<'a>(
 ///     bases for top and bottom cones. `allow_frac` or `frac_promote` fixes this
 pub fn sphere_globe<'a>(
     bounds: &Bounds, sides: u32, mats: [&'a Material<'a>; 3], options: &'a SolidOptions,
-) -> OneOrVec<Solid<'a>> {
+) -> Vec<Solid<'a>> {
     let x_radius = bounds.x_len() / 2.0;
     let y_radius = bounds.y_len() / 2.0;
     let z_radius = bounds.z_len() / 2.0;
@@ -379,7 +378,7 @@ pub fn sphere_globe<'a>(
         Solid::new(prism(top_circle, bottom_circle, false, mats, options).collect::<Vec<_>>())
     });
 
-    OneOrVec::Vec(layers.collect::<Vec<_>>())
+    layers.collect()
 }
 
 /// See <https://en.wikipedia.org/wiki/Circle_of_a_sphere>
@@ -399,23 +398,33 @@ fn radius_at_sphere_height(radius: f32, height_from_center: f32, allow_frac: boo
     }
 }
 
+// TODO: automatic texturing
+// 512x1024x128 ex: top xy=.25*8/6, side y=.25/2, side2 y=.25/3
+// largest: measure "corners", use closest fraction
+// sides: idk, need to be "relative" to largest side
+// NOTE: The displacement uses `normals` and
+// `distances` VMF fields rather than `offsets` so lighting shouldn't be weird TODO: actually verify
+
+/// A displacement cube projected into a sphere.
+///
+/// # Notes
+/// You will have to adjust the texturing on ellipsoids manually to look better.
+/// For best results, make a block brush of the same dimensions. Match the
+/// largest face of the ellipsoid to the scale of the block (0.25 * FRACTION)
+/// and copy paste to the other faces. Adjust the other faces' X or Y in the
+/// same manner (0.25 * MORE FRACTIONS).
+///
+/// See also: [`sphere_globe()`]
 pub fn sphere<'a>(
     bounds: &Bounds, mut power: u32, mats: [&'a Material<'a>; 1], options: &'a SolidOptions,
-) -> OneOrVec<Solid<'a>> {
-    // squeeze bounds to cube
-    // project disps to sphere
-    // squeeze to bounds
-
-    // no, squeeze bounds coords into cube
-    // unsqueeze result
-
+) -> Solid<'a> {
     if power < 2 {
         // NOTE: hammer seems to support power 1 displacements O_O
         // bsp seems to definitely not support it
-        eprintln!("[sphere_disp()] power clamped to 2");
+        eprintln!("[sphere()] power clamped to 2");
         power = 1;
     } else if power > 4 {
-        eprintln!("[sphere_disp()] power clamped to 4");
+        eprintln!("[sphere()] power clamped to 4");
         power = 4;
     };
     let size = Displacement::power_to_len(power);
@@ -423,40 +432,32 @@ pub fn sphere<'a>(
     let mut cube = cube(bounds, &[mats[0]; 6], options);
 
     for side in cube.sides.iter_mut() {
-        // Project points on cube to sphere
+        // create a displacement side with points in default pos
         let mut disp = Displacement::new_plane(side.plane.clone(), size);
         let ideal = disp.ideal_points();
-        let projected = ideal.inner.iter().map(|p| {
-            // convert to unit -1..=1
-            let unit = bounds_to_unit(bounds, p);
-            let projected = disp::project_unit_cube_to_sphere(&unit);
-            unit_to_bounds(bounds, &projected)
-            // let projected = unit.normalize();
 
-            // eprintln!("unit: {}\x1b[20Gprojected: {}\x1b[70Gp units: {}", unit, projected, unit_to_bounds(bounds, &projected));
-            // println!("{:.2},{:.2},{:.2}", projected.x,projected.y,projected.z);
-            // println!("{} {} {}", projected.x,projected.y,projected.z);
-            // convert back to real coords.
-            // projected
+        // Project each point
+        let projected = ideal.inner.iter().map(|p| {
+            // convert to unit coords, project, convert back to real coords
+            let unit = bounds.point_to_unit(p);
+            let sphere_point = project_cube_to_sphere(&unit);
+            bounds.unit_to_point(&sphere_point)
         });
 
-        // convert ideal and projected to dir and distances
+        // convert ideal and projected to dir and dists
         let mut dirs = Vec2d::new(Vec2d::strides(size));
         let mut dists = Vec2d::new(Vec2d::strides(size));
         let alphas = Vec2d::from_parts(vec![0.0; disp.width * disp.width], Vec2d::strides(size));
         for (ideal, projected) in ideal.inner.iter().zip(projected) {
             // let (mut dir, dist) = ideal.dir_and_dist(&projected);
             let (mut dir, dist) = ideal.dir_and_dist(&projected);
+            // remove nans TODO:DOCS: why it make them? cant explain, too tired rn
             if dir.x.is_nan() {
                 // eprintln!("DIR IS NAN: {}", dir);
                 dir = Vector3::origin();
             }
             dirs.inner.push(dir);
             dists.inner.push(dist);
-
-            // dirs.inner.push(projected);
-            // dirs.inner.push(Vector3::);
-            // dists.inner.push(500.0);
         }
         disp.normals = dirs;
         disp.distances = dists;
@@ -465,73 +466,121 @@ pub fn sphere<'a>(
         side.disp = Some(disp);
     }
 
-    // for side in cube.sides.iter_mut() {
-    //     // let normal = side.plane.normal();
-    //     // let x = side.disp.unwrap().normals = side.disp.unwrap().
-    // }
-
-    OneOrVec::One(cube)
+    cube
 }
 
-// TODO: name
-fn bounds_to_unit(bounds: &Bounds, point: &Vector3<f32>) -> Vector3<f32> {
-    let x = unit_range(bounds.min.x, bounds.max.x, point.x);
-    let y = unit_range(bounds.min.y, bounds.max.y, point.y);
-    let z = unit_range(bounds.min.z, bounds.max.z, point.z);
+// // Scale a point in a bounds to a unit vector (-1..=1 on all axes)
+// fn bounds_point_to_unit(bounds: &Bounds, point: &Vector3<f32>) -> Vector3<f32> {
+//     let x = remap(point.x, bounds.x_range(), -1f32..1f32);
+//     let y = remap(point.y, bounds.y_range(), -1f32..1f32);
+//     let z = remap(point.z, bounds.z_range(), -1f32..1f32);
 
-    Vector3::new(x, y, z)
-}
+//     Vector3::new(x, y, z)
+// }
 
-fn unit_to_bounds(bounds: &Bounds, unit: &Vector3<f32>) -> Vector3<f32> {
-    let t = vec3_unit_to_multi(unit); // -1..=1 to 0..=1
+// /// Scale a unit vector (-1..=1 on all axes) to bounds coords.
+// fn bounds_unit_to_point(bounds: &Bounds, unit: &Vector3<f32>) -> Vector3<f32> {
+//     let x = remap(unit.x, -1f32..1f32, bounds.x_range());
+//     let y = remap(unit.y, -1f32..1f32, bounds.y_range());
+//     let z = remap(unit.z, -1f32..1f32, bounds.z_range());
 
-    let x = disp::lerp(bounds.min.x, bounds.max.x, t.x);
-    let y = disp::lerp(bounds.min.y, bounds.max.y, t.y);
-    let z = disp::lerp(bounds.min.z, bounds.max.z, t.z);
-    Vector3::new(x, y, z)
-}
-
-// TODO:DOCS:
-/// value = bottom -> -1
-///
-/// value = top -> 1
-// TODO: name
-fn unit_range(bottom: f32, top: f32, value: f32) -> f32 {
-    assert!(top > bottom);
-    let v = (value - bottom) / (top - bottom); // 0..=1
-    v * 2.0 - 1.0 // -1..=1
-}
-
-fn unit_to_multiplier(value: f32) -> f32 {
-    (value + 1.0) / 2.0
-}
-
-fn vec3_unit_to_multi(value: &Vector3<f32>) -> Vector3<f32> {
-    let x = unit_to_multiplier(value.x);
-    let y = unit_to_multiplier(value.y);
-    let z = unit_to_multiplier(value.z);
-    Vector3::new(x, y, z)
-}
+//     Vector3::new(x, y, z)
+// }
 
 #[test]
 #[cfg(test)]
-fn unit() {
-    fn test(truth: f32, bottom: f32, top: f32, value: f32) {
-        assert_eq!(truth, unit_range(bottom, top, value));
-        assert_eq!(value, disp::lerp(bottom, top, unit_to_multiplier(truth)));
+#[rustfmt::skip]
+fn remap_test() {
+    const EPSILON: f32 = 1e-4;
+
+    fn assert(truth: f32, value: f32, from_range: Range<f32>, to_range: Range<f32>) {
+        // range order doesn't matter at all
+        assert_inner(truth, value, from_range.clone(), to_range.clone());
+        let to_range = to_range.start..to_range.end;
+        assert_inner(truth, value, from_range.clone(), to_range.clone());
+        let from_range = from_range.start..from_range.end;
+        assert_inner(truth, value, from_range.clone(), to_range.clone());
+        let to_range = to_range.start..to_range.end;
+        assert_inner(truth, value, from_range, to_range);
     }
-    test(-1.0, 0.0, 1.0, 0.0);
-    test(-0.5, 0.0, 1.0, 0.25);
-    test(0.0, 0.0, 1.0, 0.5);
-    test(0.5, 0.0, 1.0, 0.75);
-    test(1.0, 0.0, 1.0, 1.0);
-    test(-1.0, -200.0, 200.0, -200.0);
-    test(0.0, -200.0, 200.0, 0.0);
-    test(1.0, -200.0, 200.0, 200.0);
-    test(-1.0, -100.0, 200.0, -100.0);
-    test(0.0, -100.0, 200.0, 50.0);
-    test(1.0, -100.0, 200.0, 200.0);
+    fn assert_reflexive(value: f32, from_range: Range<f32>, to_range: Range<f32>) {
+        let truth = remap(value, from_range.clone(), to_range.clone());
+        assert(truth, value, from_range, to_range);
+    }
+    fn assert_inner(truth: f32, value: f32, from_range: Range<f32>, to_range: Range<f32>) {
+        let output_value = remap(truth, to_range.clone(), from_range.clone());
+        assert!(
+            (value - output_value).abs() < EPSILON,
+            "truth: {truth}, result: {output_value}, value: {value}, from_range: {from_range:?}, to_range: {to_range:?}"
+        );
+
+        let output_truth = remap(value, from_range.clone(), to_range.clone());
+        assert!(
+            (truth - output_truth).abs() < EPSILON,
+            "truth: {truth}, result: {output_truth}, value: {value}, from_range: {from_range:?}, to_range: {to_range:?}"
+        );
+    }
+
+    // test(123.0, 1237.0, 1.0..1.0,        1f32..1f32); // gives nan
+
+    assert(-1.0,  0.0,    0.0..1.0,       -1f32..1f32);
+    assert(-0.5,  0.25,   0.0..1.0,       -1f32..1f32);
+    assert(0.0,   0.5,    0.0..1.0,       -1f32..1f32);
+    assert(0.5,   0.75,   0.0..1.0,       -1f32..1f32);
+    assert(1.0,   1.0,    0.0..1.0,       -1f32..1f32);
+    assert(-1.0,  -200.0, -200.0..200.0,  -1f32..1f32);
+    assert(0.0,   0.0,    -200.0..200.0,  -1f32..1f32);
+    assert(1.0,   200.0,  -200.0..200.0,  -1f32..1f32);
+    assert(-1.0,  -100.0, -100.0..200.0,  -1f32..1f32);
+    assert(0.0,   50.0,   -100.0..200.0,  -1f32..1f32);
+    assert(1.0,   200.0,  -100.0..200.0,  -1f32..1f32);
+    
+    assert_reflexive(-1.0,    -200.0..200.0,          -1f32..9f32);
+    assert_reflexive(0.0,     -100.0..200.0,          -2f32..8f32);
+    assert_reflexive(-0.5,    69.0..200.0,            -3f32..7f32);
+    assert_reflexive(0.25,    1212313.0..9212313.0,   -4f32..6f32);
+    assert_reflexive(0.0,     0.0..1.0,               -5f32..5f32);
+    assert_reflexive(0.5,     0.0..1.0,               -6f32..4f32);
+    assert_reflexive(0.5,     0.0..1.0,               -7f32..3f32);
+    assert_reflexive(0.75,    0.0..1.0,               -8f32..2f32);
+    assert_reflexive(1.0,     0.0..1.0,               -9f32..1f32);
+    assert_reflexive(1.0,     0.0..1.0,               10f32..1f32);
+    assert_reflexive(-1.0,    -200.0..200.0,          -1f32..1f32);
+    assert_reflexive(-200.0,  -200.0..200.0,          -1f32..1f32);
+    assert_reflexive(0.0,     -200.0..200.0,          -1f32..1f32);
+    assert_reflexive(0.0,     -200.0..200.0,          -1f32..1f32);
+    assert_reflexive(1.0,     -200.0..200.0,          -1f32..1f32);
+    assert_reflexive(200.0,   -200.0..200.0,          -1f32..1f32);
+    assert_reflexive(-1.0,    -100.0..200.0,          -1f32..1f32);
+    assert_reflexive(-100.0,  -100.0..200.0,          -1f32..1f32);
+    assert_reflexive(0.0,     -100.0..200.0,          -1f32..1f32);
+    assert_reflexive(50.0,    -100.0..200.0,          -1f32..1f32);
+    assert_reflexive(1.0,     -100.0..200.0,          -1f32..1f32);
+    assert_reflexive(200.0,   -100.0..200.0,          -1f32..1f32);
+    // seems to have trouble with this
+    // test_reflexive(0.25,    1212313.0..92123112893.0, -4f32..6f32);
+
 }
+
+// #[test]
+// #[cfg(test)]
+// fn unit() {
+//     fn test(truth: f32, bottom: f32, top: f32, value: f32) {
+//         assert_eq!(truth, scale_to_unit(bottom, top, value));
+//         assert_eq!(value, disp::lerp(bottom, top, unit_to_multiplier(truth)));
+//     }
+//     test(-1.0, 0.0, 1.0, 0.0);
+//     test(-0.5, 0.0, 1.0, 0.25);
+//     test(0.0, 0.0, 1.0, 0.5);
+//     test(0.5, 0.0, 1.0, 0.75);
+//     test(1.0, 0.0, 1.0, 1.0);
+//     test(-1.0, -200.0, 200.0, -200.0);
+//     test(0.0, -200.0, 200.0, 0.0);
+//     test(1.0, -200.0, 200.0, 200.0);
+//     test(-1.0, -100.0, 200.0, -100.0);
+//     test(0.0, -100.0, 200.0, 50.0);
+//     test(1.0, -100.0, 200.0, 200.0);
+// }
 
 #[cfg(test)]
 mod tests;

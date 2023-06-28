@@ -11,8 +11,7 @@ pub use texture::*;
 pub use vector::*;
 
 use crate::generation::Bounds;
-use crate::{StrType};
-use crate::utils::OneOrVec;
+use crate::StrType;
 use vmf_parser_nom::ast::Property;
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -76,12 +75,6 @@ impl<'a> Map<'a> {
 impl<'a> Map<'a> {
     pub fn add_solid(&mut self, solid: Solid<'a>) {
         self.solids.push(solid);
-    }
-
-    // TODO: better
-    /// uses [`OneOrVec`]
-    pub fn add_solid2(&mut self, solid: OneOrVec<Solid<'a>>) {
-        self.solids.extend(solid.into_vec());
     }
 }
 
